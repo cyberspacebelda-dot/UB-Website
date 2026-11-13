@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UB AYURVED DRUGS &amp; PHARMACY — Cloud Web Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f3f7f4; color: #111827; }
+    .ub-green-bg { background-color: #125430; }
+    .ub-green-text { color: #125430; }
+    .ub-green-light { background-color: #E7F5EC; }
+    .ub-blue-bg { background-color: #164B8A; }
+    .ub-blue-text { color: #164B8A; }
+    .ub-blue-light { background-color: #E9F1FC; }
+    .ub-amber-bg { background-color: #B36B00; }
+    .ub-amber-text { color: #B36B00; }
+    .ub-amber-light { background-color: #FFF4E0; }
+    .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+    /* Clean Tree View Diagram Connectors (matching tree.jfif) */
+    .tree-container {
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px;
+      min-width: max-content;
+    }
+    .tree-ul {
+      padding-top: 22px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .tree-li {
+      float: left;
+      text-align: center;
+      list-style-type: none;
+      position: relative;
+      padding: 22px 10px 0 10px;
+    }
+    .tree-li::before, .tree-li::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 50%;
+      border-top: 2px solid #1F2937;
+      width: 50%;
+      height: 22px;
+    }
+    .tree-li::after {
+      right: auto;
+      left: 50%;
+      border-left: 2px solid #1F2937;
+    }
+    .tree-li:only-child::after, .tree-li:only-child::before {
+      display: none;
+    }
+    .tree-li:only-child {
+      padding-top: 0;
+    }
+    .tree-li:first-child::before, .tree-li:last-child::after {
+      border: 0 none;
+    }
+    .tree-li:last-child::before {
+      border-right: 2px solid #1F2937;
+      border-radius: 0 4px 0 0;
+    }
+    .tree-li:first-child::after {
+      border-radius: 4px 0 0 0;
+    }
+    .tree-ul .tree-ul::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      border-left: 2px solid #1F2937;
+      width: 0;
+      height: 22px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP HEADER BAR -->
+  <header class="ub-green-bg text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center text-[#125430] font-black text-base shadow border-2 border-emerald-200">
+          UB
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">
+            UB AYURVED DRUGS &amp; PHARMACY
+          </h1>
+          <p class="text-xs text-emerald-100 flex items-center gap-2">
+            <span>Belda, Paschim Medinipur (721424) • W.B.</span>
+            <span id="cloudSyncBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-800 text-emerald-100 border border-emerald-500">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Shared Android + Web DB
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right User Controls -->
+      <div id="headerUserControls" class="hidden items-center gap-2 flex-wrap">
+        <div class="bg-emerald-900/70 border border-emerald-600/50 rounded-xl px-3 py-1.5 text-right">
+          <div id="loggedInUserName" class="text-xs font-extrabold text-white"></div>
+          <div id="loggedInUserRoleBadge" class="text-[10px] text-emerald-200 font-semibold"></div>
+        </div>
+        <a href="https://github.com/cyberspacebelda-dot/UB-DASHBOARD-APK/releases/latest/download/app-debug.apk"
+           target="_blank"
+           class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow flex items-center gap-1.5 transition">
+          <span>📲 Android APK</span>
+        </a>
+        <button onclick="window.ubApp.logout()"
+                class="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/25 transition">
+          Switch / Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LOGIN VIEW -->
+  <main id="loginView" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Office / Staff / Admin Login Card -->
+      <div class="bg-white rounded-2xl shadow-lg border border-emerald-900/10 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold ub-green-light ub-green-text">
+              🏢 OFFICE &amp; ADMIN LOGIN
+            </span>
+            <span class="text-xs text-slate-400 font-semibold">Same PIN as Android App</span>
+          </div>
+          <h2 class="text-xl font-extrabold text-slate-900 mb-1">Office Staff &amp; Super Admin</h2>
+          <p class="text-xs text-slate-500 mb-5">
+            Sign in with your official UB Ayurved Office Role &amp; Access Code to manage Billing, Medicines, HM Profiles, Promotions &amp; Payouts.
+          </p>
+
+          <div class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Select Office / Admin Role</label>
+              <select id="officeRoleSelect" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700">
+                <option value="SUPER_ADMIN">Super Admin (Belda HQ)</option>
+                <option value="ADMIN_1">Belda HQ Admin</option>
+                <option value="STAFF_SONALI">Sonali (Staff / Admin - Billing)</option>
+                <option value="STAFF_KOUSHIK">Koushik (Staff / Admin - Billing)</option>
+                <option value="STAFF_JEET">Jeet (Staff / Admin - Delivery &amp; Stock)</option>
+                <option value="ADMIN_GOPAL">Gopal (Admin)</option>
+                <option value="ADMIN_MILAN">Milan (Admin)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Office Access PIN / Code</label>
+              <input id="officePinInput" type="password" placeholder="Enter your PIN code..."
+                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700"
+                     onkeydown="if(event.key==='Enter') window.ubApp.loginOffice()" />
+            </div>
+
+            <div id="officeLoginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2.5"></div>
+          </div>
+        </div>
+
+        <button onclick="window.ubApp.loginOffice()"
+                class="mt-6 w-full py-3 rounded-xl ub-green-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
+          Login to Office &amp; Admin Console →
+        </button>
+      </div>
+
+      <!-- Health Mitra (HM / Rank Holder) Login Card -->
+      <div class="bg-white rounded-2xl shadow-lg border border-blue-900/10 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold ub-blue-light ub-blue-text">
+              🩺 HEALTH MITRA &amp; RANK HOLDER LOGIN
+            </span>
+            <span class="text-xs text-slate-400 font-semibold">HM1 • HM2 • HM3 • MR–RSM</span>
+          </div>
+          <h2 class="text-xl font-extrabold text-slate-900 mb-1">Health Mitra Portal</h2>
+          <p class="text-xs text-slate-500 mb-5">
+            Login with your Health Mitra ID (e.g. <code class="font-bold text-slate-700">HM001</code>) or registered Mobile Number and Password.
+          </p>
+
+          <div class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">HM Code or Mobile Number</label>
+              <input id="hmLoginIdInput" type="text" placeholder="e.g. HM001 or 9876543210"
+                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-blue-700" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+              <input id="hmLoginPasswordInput" type="password" placeholder="Enter your password (default 123456)"
+                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-700"
+                     onkeydown="if(event.key==='Enter') window.ubApp.loginHm()" />
+            </div>
+
+            <div id="hmLoginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2.5"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-2.5">
+          <button onclick="window.ubApp.loginHm()"
+                  class="w-full py-3 rounded-xl ub-blue-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
+            Login as Health Mitra →
+          </button>
+          <button onclick="window.ubApp.openRegisterHmModal()"
+                  class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 transition">
+            + New Health Mitra Registration
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="dashboardView" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 gap-3">
+
+    <!-- UPPER SECTION (Office KPIs OR HM Self Orders Only) -->
+    <div id="upperSummaryContainer"></div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-thin" id="navTabsContainer">
+    </div>
+
+    <!-- ACTIVE TAB CONTENT -->
+    <div id="activeTabContent" class="flex-1 pb-12"></div>
+  </div>
+
+  <!-- MODAL OVERLAY CONTAINER -->
+  <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 overflow-y-auto">
+    <div id="modalBox" class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <h3 id="modalTitle" class="text-base font-extrabold text-slate-900">Modal</h3>
+        <button onclick="window.ubApp.closeModal()" class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center font-bold text-slate-600">✕</button>
+      </div>
+      <div id="modalBody" class="p-5 overflow-y-auto space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastBox" class="hidden fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-xl text-white font-bold text-xs ub-green-bg border border-white/20"></div>
+
+  <script src="./price-list-2026.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
