@@ -27,8 +27,8 @@ Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record on
 |---|---|---|---|---|---|
 | office_staff_auth | R (own + admin lookup via trusted backend); C/U/D via trusted backend only | same | Own R only | Own R only | — |
 | health_mitras | R/C/U/D | — | R; C/U only if explicitly delegated for member onboarding | — | Own R; narrowly scoped own-profile updates only |
-| bills | R/C/U/D | R/C/U | R/C; update only billing/payment fields | R; U only delivery status and delivery metadata | Own/mapped bills R only |
-| returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/C/U for operational returns; no deletion by default | Own/mapped return R or C only if product workflow supports it |
+| bills | R/C/U/D | R/C/U | R/C; update only billing/payment fields | R; U only delivery status and delivery metadata | Own/mapped bills R; create own orders only through validated workflow |
+| returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/C/U for operational returns; no deletion by default | Own/mapped return R/C only through validated workflow |
 | medicines | R/C/U/D | R/C/U | R; U only if medicine editing is explicitly retained | R (delivery/stock lookup only) | R to published price/catalogue fields only |
 | commission_config | R/C/U/D | R; U only delegated settings | — | — | — |
 | ledger | R/C/U/D | R; write only via trusted billing workflow | R; create/update only through validated billing workflow | — | Own/mapped balance summary R only; no direct writes |
@@ -61,9 +61,16 @@ These patterns must be refactored: listeners should start only after verified id
 - Confirm whether ADMIN_GOPAL and ADMIN_MILAN may edit HM profiles, medicines, billing, returns, and ledger.
 - Sonali and Koushik: user confirmed billing, HM registration/profile management, and medicine price/stock management; commission configuration and admin account management are excluded. Confirm exact permitted operations/fields against both apps before final rules.
 - Jeet: user confirmed bill viewing, delivery-status updates, returns management, stock movements, and raw-material oversight. Verify exact raw-material collections, fields, and whether oversight includes purchase/receipt entries or only stock tracking before final rules.
-- Confirm HM permissions for own profile updates, own bills, order placement, returns, and balance visibility.
+- HM permissions: user confirmed own-profile updates, own bills, order placement, return requests, and own balance visibility. Restrict all access to the authenticated HM's mapped records; orders/returns must use validated workflows and balance is read-only.
 - Android source-level read/write audit is still pending; this draft is not yet an Android-verified matrix.
 
+
+## Confirmed Health Mitra permissions (user-confirmed)
+- A Health Mitra may update only their own permitted profile fields.
+- A Health Mitra may view only their own/mapped bills and place orders through the validated order workflow.
+- A Health Mitra may submit return requests for their own/mapped orders only.
+- A Health Mitra may view only their own balance summary; no direct ledger writes or balance edits.
+- The HM UID-to-record mapping must be trusted and must not rely on a client-supplied HM code alone.
 
 ## Confirmed Jeet permissions (user-confirmed)
 - JEET may view bills and update delivery status.
