@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UB AYURVED Office Phone Login (Staging)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+<main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
+  <div class="text-center">
+    <div class="text-xs font-bold tracking-widest text-emerald-700">UB AYURVED • STAGING</div>
+    <h1 class="text-2xl font-extrabold text-slate-900 mt-2">Office Phone OTP</h1>
+    <p class="text-sm text-slate-500 mt-1">Use your registered Office mobile number. Access is granted only when an active UID-bound Office profile exists.</p>
+  </div>
+
+  <div id="status" class="hidden rounded-xl p-3 text-sm" role="status" aria-live="polite"></div>
+
+  <section class="space-y-2">
+    <label for="phone" class="block text-sm font-bold text-slate-700">Mobile number (international format)</label>
+    <input id="phone" type="tel" autocomplete="tel" placeholder="+91XXXXXXXXXX"
+      class="w-full rounded-xl border border-slate-300 px-3 py-3 text-base">
+    <div id="recaptcha-container"></div>
+    <button id="send" class="w-full rounded-xl bg-emerald-800 text-white font-bold py-3">Send OTP</button>
+  </section>
+
+  <section id="otp-section" class="hidden space-y-2">
+    <label for="otp" class="block text-sm font-bold text-slate-700">6-digit OTP</label>
+    <input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter OTP"
+      class="w-full rounded-xl border border-slate-300 px-3 py-3 text-base tracking-widest">
+    <button id="verify" class="w-full rounded-xl bg-blue-800 text-white font-bold py-3">Verify & Check Office Access</button>
+  </section>
+
+  <section id="identity" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-3 text-xs break-all">
+    <div class="font-bold text-slate-700 mb-1">Firebase UID (for authorized profile provisioning)</div>
+    <code id="uid"></code>
+  </section>
+
+  <p class="text-xs text-slate-500 border-t pt-3">
+    This is a staging login page. It does not create Firestore role profiles or change Firestore Rules.
+    Never share your OTP. If your phone verifies but no Office profile exists, access will be denied.
+  </p>
+</main>
+<script type="module">
+import { createPhoneRecaptcha, sendPhoneOtp, confirmPhoneOtp, clearPhoneRecaptcha, signOutFirebase } from "./firebase-auth.js";
+import { getAuthorizedOfficeProfile } from "./office-auth.js";
+
+const $ = (id) => document.getElementById(id);
+const status = $("status");
+let recaptchaReady = false;
+
+function show(message, kind = "info") {
+  status.textContent = message;
+  status.className = "rounded-xl p-3 text-sm " + (kind === "error"
+    ? "bg-red-50 text-red-800 border border-red-200"
+    : kind === "success"
+      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+      : "bg-blue-50 text-blue-800 border border-blue-200");
+}
+function errorMessage(error) {
+  return error?.message || "An unexpected error occurred.";
+}
+
+$("send").addEventListener("click", async () => {
+  $("send").disabled = true;
+  try {
+    if (!recaptchaReady) {
+      await createPhoneRecaptcha("recaptcha-container", "normal");
+      recaptchaReady = true;
+    }
+    await sendPhoneOtp($("phone").value);
+    $("otp-section").classList.remove("hidden");
+    show("OTP sent. Enter the code received on your own phone.", "success");
+  } catch (error) {
+    show(errorMessage(error), "error");
+    clearPhoneRecaptcha();
+    recaptchaReady = false;
+  } finally {
+    $("send").disabled = false;
+  }
+});
+
+$("verify").addEventListener("click", async () => {
+  $("verify").disabled = true;
+  try {
+    const user = await confirmPhoneOtp($("otp").value);
+    try {
+      const profile = await getAuthorizedOfficeProfile(user);
+      show("Office access verified for " + profile.displayName + " (" + profile.role + "). This staging page does not open the main dashboard yet.", "success");
+      $("identity").classList.remove("hidden");
+      $("uid").textContent = user.uid;
+    } catch (profileError) {
+      $("identity").classList.remove("hidden");
+      $("uid").textContent = user.uid;
+      show(errorMessage(profileError) + " Your verified Firebase UID is shown below. An authorized administrator must provision the matching office_staff_auth/{uid} profile before access is granted.", "error");
+    }
+  } catch (error) {
+    show(errorMessage(error), "error");
+  } finally {
+    $("verify").disabled = false;
+  }
+});
+</script>
+</body>
+</html>
