@@ -13,7 +13,7 @@ Draft for review only. This document does not change Firebase Authentication use
 | Existing Website role | Canonical category | Notes |
 |---|---|---|
 | SUPER_ADMIN | SUPER_ADMIN | Full operational administration, subject to audited rules |
-| ADMIN_1 | OFFICE_ADMIN | Legacy website currently marks this as super-admin-like; confirm whether it should retain all administrative powers |
+| ADMIN_1 | REMOVED / NOT USED | Do not provision this role; remove its login/profile entry from the future auth migration. Existing historical records must be reviewed before any deletion. |
 | ADMIN_GOPAL | OFFICE_ADMIN | Existing general admin |
 | ADMIN_MILAN | OFFICE_ADMIN | Existing general admin |
 | STAFF_SONALI | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
@@ -54,7 +54,7 @@ These patterns must be refactored: listeners should start only after verified id
 7. Keep deny-by-default rules until each actual Android and Website operation has a verified allow rule and emulator test.
 
 ## Open decisions before final rules
-- Confirm whether ADMIN_1 truly has the same privileges as SUPER_ADMIN.
+- ADMIN_1 is not required and should not be provisioned. Before removing any existing Firebase Auth user or Firestore profile, identify whether one exists and obtain explicit approval; do not delete historical business records.
 - Confirm whether ADMIN_GOPAL and ADMIN_MILAN may edit HM profiles, medicines, billing, returns, and ledger.
 - Confirm whether Sonali and Koushik retain HM registration/profile editing and medicine price editing, or only billing.
 - Confirm exactly which delivery operations Jeet performs (bill delivery status, returns, inventory movement).
