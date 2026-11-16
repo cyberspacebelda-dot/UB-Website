@@ -18,7 +18,7 @@ Draft for review only. This document does not change Firebase Authentication use
 | ADMIN_MILAN | BILLING_PRODUCTION_VIEWER | View billing and production/stock only; no edit, delete, verification, member administration, or configuration permissions unless separately approved |
 | STAFF_SONALI | BILLING_STAFF | User-confirmed scope: billing, HM registration/profile management, and medicine price/stock management; no commission configuration or admin account management. Exact write fields/workflows remain subject to source audit. |
 | STAFF_KOUSHIK | BILLING_STAFF | User-confirmed scope: billing, HM registration/profile management, and medicine price/stock management; no commission configuration or admin account management. Exact write fields/workflows remain subject to source audit. |
-| STAFF_JEET | DELIVERY_STAFF | Website currently allows delivery confirmation |
+| STAFF_JEET | DELIVERY_STAFF | User-confirmed scope: view bills, update delivery status, manage returns and stock movements, and oversee raw-material stock. Access must be limited to operational documents; no commission configuration or admin account management. |
 
 ## Proposed collection matrix
 Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record only, Scoped = only documents/fields needed for assigned task, — = deny by default.
@@ -28,11 +28,13 @@ Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record on
 | office_staff_auth | R (own + admin lookup via trusted backend); C/U/D via trusted backend only | same | Own R only | Own R only | — |
 | health_mitras | R/C/U/D | — | R; C/U only if explicitly delegated for member onboarding | — | Own R; narrowly scoped own-profile updates only |
 | bills | R/C/U/D | R/C/U | R/C; update only billing/payment fields | R; U only delivery status and delivery metadata | Own/mapped bills R only |
-| returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/U only if return handover is part of delivery workflow | Own/mapped return R or C only if product workflow supports it |
+| returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/C/U for operational returns; no deletion by default | Own/mapped return R or C only if product workflow supports it |
 | medicines | R/C/U/D | R/C/U | R; U only if medicine editing is explicitly retained | R (delivery/stock lookup only) | R to published price/catalogue fields only |
 | commission_config | R/C/U/D | R; U only delegated settings | — | — | — |
 | ledger | R/C/U/D | R; write only via trusted billing workflow | R; create/update only through validated billing workflow | — | Own/mapped balance summary R only; no direct writes |
-| inventory_logs | R/C/U/D | R; writes through trusted stock workflow | R; write only if stock posting is part of billing workflow | Scoped R/C for delivery stock movements if required | — |
+| inventory_logs | R/C/U/D | R; writes through trusted stock workflow | R; write only if stock posting is part of billing workflow | Scoped R/C for stock movements; append-only audit entries, no delete | — |
+| raw_materials (collection to verify) | R/C/U/D | R/C/U if delegated | R; U only if explicitly delegated | Scoped R/C/U for raw-material stock oversight; no delete by default | — |
+| raw_material_stock_movements (collection to verify) | R/C/U/D | R; writes through trusted stock workflow | R if required for billing | Scoped R/C; append-only movement records, no delete | — |
 | admins (legacy) | — | — | — | — | — |
 | Billing & production/stock viewing role | — | — | — | — | ADMIN_GOPAL: R (billing + stock only); ADMIN_MILAN: R (billing + stock only) |
 
@@ -58,10 +60,16 @@ These patterns must be refactored: listeners should start only after verified id
 - ADMIN_1 is not required and should not be provisioned. Before removing any existing Firebase Auth user or Firestore profile, identify whether one exists and obtain explicit approval; do not delete historical business records.
 - Confirm whether ADMIN_GOPAL and ADMIN_MILAN may edit HM profiles, medicines, billing, returns, and ledger.
 - Sonali and Koushik: user confirmed billing, HM registration/profile management, and medicine price/stock management; commission configuration and admin account management are excluded. Confirm exact permitted operations/fields against both apps before final rules.
-- Confirm exactly which delivery operations Jeet performs (bill delivery status, returns, inventory movement).
+- Jeet: user confirmed bill viewing, delivery-status updates, returns management, stock movements, and raw-material oversight. Verify exact raw-material collections, fields, and whether oversight includes purchase/receipt entries or only stock tracking before final rules.
 - Confirm HM permissions for own profile updates, own bills, order placement, returns, and balance visibility.
 - Android source-level read/write audit is still pending; this draft is not yet an Android-verified matrix.
 
+
+## Confirmed Jeet permissions (user-confirmed)
+- JEET may view bills and update delivery status.
+- JEET may manage returns and stock movements within the operational workflow.
+- JEET is responsible for raw-material oversight. Until the underlying schema is audited, interpret this as scoped raw-material stock read/create/update access, with no delete permission by default.
+- Stock and movement history should be append-only where possible; corrections should be recorded as compensating movements rather than deleting history.
 
 ## Confirmed additional restriction (user-confirmed)
 - ADMIN_GOPAL and ADMIN_MILAN are view-only users for Billing and Production/Stock.
