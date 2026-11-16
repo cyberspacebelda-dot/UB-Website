@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // These claims must be assigned only by a trusted Admin SDK environment.
+    // Never let a browser or Android client assign custom claims.
+    function isOfficeAdmin() {
+      return signedIn() && request.auth.token.officeAdmin == true;
+    }
+
+    function isVerifiedPhoneUser() {
+      return signedIn() &&
+        request.auth.token.phone_number is string &&
+        request.auth.token.phone_number.size() > 0;
+    }
+
+    function isOwnActiveOfficeProfile(uid) {
+      return isVerifiedPhoneUser() &&
+        request.auth.uid == uid &&
+        exists(/databases/$(database)/documents/office_staff_auth/$(uid)) &&
+        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.uid == request.auth.uid &&
+        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.phoneE164 == request.auth.token.phone_number &&
+        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.active == true;
+    }
+
+    function validMedicine(data) {
+      return data.slNo is int && data.slNo >= 0 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.codeName is string && data.codeName.size() > 0 && data.codeName.size() <= 100 &&
+        data.quantityNetContent is string && data.quantityNetContent.size() <= 100 &&
+        data.mrpPrice is number && data.mrpPrice >= 0 &&
+        data.hmPrice is number && data.hmPrice >= 0 &&
+        data.patientPrice is number && data.patientPrice >= 0 &&
+        data.stockQuantity is int && data.stockQuantity >= 0 &&
+        data.lowStockThreshold is int && data.lowStockThreshold >= 0 &&
+        data.status in ['AVAILABLE', 'LOW_STOCK', 'OUT_OF_STOCK'] &&
+        (!('branchStock' in data) || data.branchStock is map) &&
+        (!('batchNumber' in data) || (data.batchNumber is string && data.batchNumber.size() <= 100)) &&
+        (!('expiryDate' in data) || (data.expiryDate is string && data.expiryDate.size() <= 50)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+        (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 150));
+    }
+
+    // A user can fetch only their own UID-keyed profile. No client can create,
+    // update, list, or delete office authorization profiles.
+    match /office_staff_auth/{uid} {
+      allow get: if isOwnActiveOfficeProfile(uid) || isOfficeAdmin();
+      allow list, create, update, delete: if false;
+    }
+
+    // Public product catalogue read is retained for customer price lookup.
+    // Writes require a trusted custom claim, not an email address or client document.
+    match /medicines/{medicineId} {
+      allow get, list: if true;
+      allow create: if isOfficeAdmin() &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.createdAt <= request.time &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.updatedAt <= request.time &&
+        validMedicine(request.resource.data);
+      allow update: if isOfficeAdmin() &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.updatedAt <= request.time &&
+        validMedicine(request.resource.data);
+      allow delete: if isOfficeAdmin();
+    }
+
+    // Business data is intentionally deny-by-default until the per-role
+    // access matrix and the UID-to-HM identity mapping are implemented.
+    match /health_mitras/{documentId} {
+      allow read, write: if false;
+    }
+    match /bills/{documentId} {
+      allow read, write: if false;
+    }
+    match /returns/{documentId} {
+      allow read, write: if false;
+    }
+    match /ledger/{documentId} {
+      allow read, write: if false;
+    }
+    match /commission_config/{documentId} {
+      allow read, write: if false;
+    }
+    match /inventory_logs/{documentId} {
+      allow read, write: if false;
+    }
+    match /admins/{documentId} {
+      allow read, write: if false;
+    }
+
+    // Catch-all deny. No broad allow rules elsewhere.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
