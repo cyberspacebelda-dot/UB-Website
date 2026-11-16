@@ -16,8 +16,8 @@ Draft for review only. This document does not change Firebase Authentication use
 | ADMIN_1 | REMOVED / NOT USED | Do not provision this role; remove its login/profile entry from the future auth migration. Existing historical records must be reviewed before any deletion. |
 | ADMIN_GOPAL | BILLING_PRODUCTION_VIEWER | View billing and production/stock only; no edit, delete, verification, member administration, or configuration permissions unless separately approved |
 | ADMIN_MILAN | BILLING_PRODUCTION_VIEWER | View billing and production/stock only; no edit, delete, verification, member administration, or configuration permissions unless separately approved |
-| STAFF_SONALI | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
-| STAFF_KOUSHIK | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
+| STAFF_SONALI | BILLING_STAFF | User-confirmed scope: billing, HM registration/profile management, and medicine price/stock management; no commission configuration or admin account management. Exact write fields/workflows remain subject to source audit. |
+| STAFF_KOUSHIK | BILLING_STAFF | User-confirmed scope: billing, HM registration/profile management, and medicine price/stock management; no commission configuration or admin account management. Exact write fields/workflows remain subject to source audit. |
 | STAFF_JEET | DELIVERY_STAFF | Website currently allows delivery confirmation |
 
 ## Proposed collection matrix
@@ -57,7 +57,7 @@ These patterns must be refactored: listeners should start only after verified id
 ## Open decisions before final rules
 - ADMIN_1 is not required and should not be provisioned. Before removing any existing Firebase Auth user or Firestore profile, identify whether one exists and obtain explicit approval; do not delete historical business records.
 - Confirm whether ADMIN_GOPAL and ADMIN_MILAN may edit HM profiles, medicines, billing, returns, and ledger.
-- Confirm whether Sonali and Koushik retain HM registration/profile editing and medicine price editing, or only billing.
+- Sonali and Koushik: user confirmed billing, HM registration/profile management, and medicine price/stock management; commission configuration and admin account management are excluded. Confirm exact permitted operations/fields against both apps before final rules.
 - Confirm exactly which delivery operations Jeet performs (bill delivery status, returns, inventory movement).
 - Confirm HM permissions for own profile updates, own bills, order placement, returns, and balance visibility.
 - Android source-level read/write audit is still pending; this draft is not yet an Android-verified matrix.
