@@ -14,8 +14,8 @@ Draft for review only. This document does not change Firebase Authentication use
 |---|---|---|
 | SUPER_ADMIN | SUPER_ADMIN | Full operational administration, subject to audited rules |
 | ADMIN_1 | REMOVED / NOT USED | Do not provision this role; remove its login/profile entry from the future auth migration. Existing historical records must be reviewed before any deletion. |
-| ADMIN_GOPAL | OFFICE_ADMIN | Existing general admin |
-| ADMIN_MILAN | OFFICE_ADMIN | Existing general admin |
+| ADMIN_GOPAL | BILLING_PRODUCTION_VIEWER | View billing and production/stock only; no edit, delete, verification, member administration, or configuration permissions unless separately approved |
+| ADMIN_MILAN | BILLING_PRODUCTION_VIEWER | View billing and production/stock only; no edit, delete, verification, member administration, or configuration permissions unless separately approved |
 | STAFF_SONALI | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
 | STAFF_KOUSHIK | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
 | STAFF_JEET | DELIVERY_STAFF | Website currently allows delivery confirmation |
@@ -26,7 +26,7 @@ Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record on
 | Collection | SUPER_ADMIN | OFFICE_ADMIN | BILLING_STAFF | DELIVERY_STAFF | HEALTH_MITRA |
 |---|---|---|---|---|---|
 | office_staff_auth | R (own + admin lookup via trusted backend); C/U/D via trusted backend only | same | Own R only | Own R only | — |
-| health_mitras | R/C/U/D | R; C/U only if explicitly delegated | R; C/U only if explicitly delegated for member onboarding | — | Own R; narrowly scoped own-profile updates only |
+| health_mitras | R/C/U/D | — | R; C/U only if explicitly delegated for member onboarding | — | Own R; narrowly scoped own-profile updates only |
 | bills | R/C/U/D | R/C/U | R/C; update only billing/payment fields | R; U only delivery status and delivery metadata | Own/mapped bills R only |
 | returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/U only if return handover is part of delivery workflow | Own/mapped return R or C only if product workflow supports it |
 | medicines | R/C/U/D | R/C/U | R; U only if medicine editing is explicitly retained | R (delivery/stock lookup only) | R to published price/catalogue fields only |
@@ -34,6 +34,7 @@ Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record on
 | ledger | R/C/U/D | R; write only via trusted billing workflow | R; create/update only through validated billing workflow | — | Own/mapped balance summary R only; no direct writes |
 | inventory_logs | R/C/U/D | R; writes through trusted stock workflow | R; write only if stock posting is part of billing workflow | Scoped R/C for delivery stock movements if required | — |
 | admins (legacy) | — | — | — | — | — |
+| Billing & production/stock viewing role | — | — | — | — | ADMIN_GOPAL: R (billing + stock only); ADMIN_MILAN: R (billing + stock only) |
 
 ## Website operations observed in current source
 The current Website `app.js`:
@@ -60,3 +61,9 @@ These patterns must be refactored: listeners should start only after verified id
 - Confirm exactly which delivery operations Jeet performs (bill delivery status, returns, inventory movement).
 - Confirm HM permissions for own profile updates, own bills, order placement, returns, and balance visibility.
 - Android source-level read/write audit is still pending; this draft is not yet an Android-verified matrix.
+
+
+## Confirmed additional restriction (user-confirmed)
+- ADMIN_GOPAL and ADMIN_MILAN are view-only users for Billing and Production/Stock.
+- They must not create, edit, delete, verify, deliver, change member profiles, change medicines/prices, change commission settings, or write ledger entries.
+- The exact Firestore collections and fields that implement the Production/Stock screens must be verified against both apps before granting read access. Do not assume every field in a mixed document is safe to expose; split sensitive fields/documents or use a trusted backend projection where needed.
