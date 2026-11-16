@@ -1,0 +1,62 @@
+# UB AYURVED Firestore Permission Matrix
+## Status
+Draft for review only. This document does not change Firebase Authentication users, Firestore data, or deployed Firestore Rules. Do not publish rules from this matrix until Android and Website operations have both been verified.
+
+## Identity and authorization model
+- Authentication: Firebase Phone Authentication; authorization comes from a trusted profile / server-controlled custom claims, never from a client-selected role or localStorage.
+- Office profile: `office_staff_auth/{uid}`, provisioned only by a trusted administrative process. Client SDKs cannot create, update, or delete these profiles.
+- Health Mitra: Firebase UID must be mapped to exactly one existing HM record through a trusted mapping (for example, a UID field or separate UID-keyed mapping). HM Code is an identifier, not a password.
+- A signed-in phone number alone does not grant Office or HM business-data access.
+- All access must be scoped to the minimum required documents and fields. Avoid allowing an HM to list all HM records or bills.
+
+## Role mapping
+| Existing Website role | Canonical category | Notes |
+|---|---|---|
+| SUPER_ADMIN | SUPER_ADMIN | Full operational administration, subject to audited rules |
+| ADMIN_1 | OFFICE_ADMIN | Legacy website currently marks this as super-admin-like; confirm whether it should retain all administrative powers |
+| ADMIN_GOPAL | OFFICE_ADMIN | Existing general admin |
+| ADMIN_MILAN | OFFICE_ADMIN | Existing general admin |
+| STAFF_SONALI | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
+| STAFF_KOUSHIK | BILLING_STAFF | Website currently allows medicine/HM editing and billing verification |
+| STAFF_JEET | DELIVERY_STAFF | Website currently allows delivery confirmation |
+
+## Proposed collection matrix
+Legend: R = read, C = create, U = update, D = delete, Own = own/mapped record only, Scoped = only documents/fields needed for assigned task, — = deny by default.
+
+| Collection | SUPER_ADMIN | OFFICE_ADMIN | BILLING_STAFF | DELIVERY_STAFF | HEALTH_MITRA |
+|---|---|---|---|---|---|
+| office_staff_auth | R (own + admin lookup via trusted backend); C/U/D via trusted backend only | same | Own R only | Own R only | — |
+| health_mitras | R/C/U/D | R; C/U only if explicitly delegated | R; C/U only if explicitly delegated for member onboarding | — | Own R; narrowly scoped own-profile updates only |
+| bills | R/C/U/D | R/C/U | R/C; update only billing/payment fields | R; U only delivery status and delivery metadata | Own/mapped bills R only |
+| returns | R/C/U/D | R/C/U | R/C/U within billing workflow | Scoped R/U only if return handover is part of delivery workflow | Own/mapped return R or C only if product workflow supports it |
+| medicines | R/C/U/D | R/C/U | R; U only if medicine editing is explicitly retained | R (delivery/stock lookup only) | R to published price/catalogue fields only |
+| commission_config | R/C/U/D | R; U only delegated settings | — | — | — |
+| ledger | R/C/U/D | R; write only via trusted billing workflow | R; create/update only through validated billing workflow | — | Own/mapped balance summary R only; no direct writes |
+| inventory_logs | R/C/U/D | R; writes through trusted stock workflow | R; write only if stock posting is part of billing workflow | Scoped R/C for delivery stock movements if required | — |
+| admins (legacy) | — | — | — | — | — |
+
+## Website operations observed in current source
+The current Website `app.js`:
+- Subscribes to `health_mitras`, `bills`, `medicines`, `commission_config/medicine_price_list_2026`, `commission_config/incentive_rules_v2`, and `ledger` before login/profile authorization.
+- Creates/updates `health_mitras` during HM registration and profile/rank/verification changes.
+- Creates `bills` and updates payment/delivery status.
+- Writes medicine and commission configuration.
+- Reads plaintext HM passwords from `health_mitras` and uses browser-side PIN/password checks.
+These patterns must be refactored: listeners should start only after verified identity and role; plaintext passwords and client-side PIN authorization must be removed after tested migration; all writes must be authorized by Firestore Rules or trusted backend validation.
+
+## Required implementation constraints
+1. Never trust `localStorage`, a form-selected role, a client-supplied display name, or a client-supplied `isAdmin` flag.
+2. Do not permit broad `list` access to `health_mitras`, `bills`, or `ledger` for ordinary HM accounts.
+3. Prefer callable Cloud Functions / trusted backend for multi-document business operations, incentive calculations, ledger posting, and role provisioning.
+4. Use field-level validation and immutable audit metadata (creator, timestamps, status transitions). Firestore Rules cannot safely enforce arbitrary business workflows or secret field redaction from a document returned to a client.
+5. Separate public medicine catalogue fields from private stock/cost/administrative fields if clients with different roles need different visibility.
+6. Remove the Website fallback from the named Firestore database to the default database; silently connecting to another database is unsafe.
+7. Keep deny-by-default rules until each actual Android and Website operation has a verified allow rule and emulator test.
+
+## Open decisions before final rules
+- Confirm whether ADMIN_1 truly has the same privileges as SUPER_ADMIN.
+- Confirm whether ADMIN_GOPAL and ADMIN_MILAN may edit HM profiles, medicines, billing, returns, and ledger.
+- Confirm whether Sonali and Koushik retain HM registration/profile editing and medicine price editing, or only billing.
+- Confirm exactly which delivery operations Jeet performs (bill delivery status, returns, inventory movement).
+- Confirm HM permissions for own profile updates, own bills, order placement, returns, and balance visibility.
+- Android source-level read/write audit is still pending; this draft is not yet an Android-verified matrix.
