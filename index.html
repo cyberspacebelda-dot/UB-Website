@@ -133,45 +133,31 @@
       <div class="bg-white rounded-2xl shadow-lg border border-emerald-900/10 p-6 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-4">
-            <span class="px-3 py-1 rounded-full text-xs font-extrabold ub-green-light ub-green-text">
-              🏢 OFFICE &amp; ADMIN LOGIN
-            </span>
-            <span class="text-xs text-slate-400 font-semibold">Same PIN as Android App</span>
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold ub-green-light ub-green-text">🏢 SECURE OFFICE LOGIN</span>
+            <span class="text-xs text-slate-400 font-semibold">Firebase Phone OTP</span>
           </div>
-          <h2 class="text-xl font-extrabold text-slate-900 mb-1">Office Staff &amp; Super Admin</h2>
-          <p class="text-xs text-slate-500 mb-5">
-            Sign in with your official UB Ayurved Office Role &amp; Access Code to manage Billing, Medicines, HM Profiles, Promotions &amp; Payouts.
-          </p>
-
+          <h2 class="text-xl font-extrabold text-slate-900 mb-1">Office Staff &amp; Administration</h2>
+          <p class="text-xs text-slate-500 mb-5">Use the mobile number registered to your Office account. Your role is loaded from your UID-bound authorization profile.</p>
           <div class="space-y-3.5">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Select Office / Admin Role</label>
-              <select id="officeRoleSelect" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700">
-                <option value="SUPER_ADMIN">Super Admin (Belda HQ)</option>
-                <option value="ADMIN_1">Belda HQ Admin</option>
-                <option value="STAFF_SONALI">Sonali (Staff / Admin - Billing)</option>
-                <option value="STAFF_KOUSHIK">Koushik (Staff / Admin - Billing)</option>
-                <option value="STAFF_JEET">Jeet (Staff / Admin - Delivery &amp; Stock)</option>
-                <option value="ADMIN_GOPAL">Gopal (Admin)</option>
-                <option value="ADMIN_MILAN">Milan (Admin)</option>
-              </select>
+              <label class="block text-xs font-bold text-slate-700 mb-1" for="officePhoneInput">Registered mobile number</label>
+              <input id="officePhoneInput" type="tel" autocomplete="tel" placeholder="+919876543210"
+                class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700" />
             </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Office Access PIN / Code</label>
-              <input id="officePinInput" type="password" placeholder="Enter your PIN code..."
-                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700"
-                     onkeydown="if(event.key==='Enter') window.ubApp.loginOffice()" />
+            <div id="officeRecaptchaContainer"></div>
+            <button id="sendOfficeOtpButton" onclick="window.ubApp.sendOfficeOtp()"
+              class="w-full py-3 rounded-xl ub-green-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">Send verification OTP</button>
+            <div id="officeOtpSection" class="hidden space-y-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1" for="officeOtpInput">6-digit verification code</label>
+              <input id="officeOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter OTP"
+                class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm font-semibold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-700"
+                onkeydown="if(event.key==='Enter') window.ubApp.verifyOfficeOtp()" />
+              <button id="verifyOfficeOtpButton" onclick="window.ubApp.verifyOfficeOtp()"
+                class="w-full py-3 rounded-xl bg-blue-800 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition">Verify OTP &amp; Open Dashboard</button>
             </div>
-
             <div id="officeLoginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2.5"></div>
           </div>
         </div>
-
-        <button onclick="window.ubApp.loginOffice()"
-                class="mt-6 w-full py-3 rounded-xl ub-green-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
-          Login to Office &amp; Admin Console →
-        </button>
       </div>
 
       <!-- Health Mitra (HM / Rank Holder) Login Card -->
@@ -191,23 +177,18 @@
           <div class="space-y-3.5">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">HM Code or Mobile Number</label>
-              <input id="hmLoginIdInput" type="text" placeholder="e.g. HM001 or 9876543210"
+              <input id="hmLoginIdInput" type="text" placeholder="HM OTP access will be enabled after account linking" disabled
                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-blue-700" />
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
-              <input id="hmLoginPasswordInput" type="password" placeholder="Enter your password (default 123456)"
-                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-700"
-                     onkeydown="if(event.key==='Enter') window.ubApp.loginHm()" />
-            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">HM password login is paused during secure Firebase account linking. Existing HM records are not changed.</div>
 
             <div id="hmLoginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2.5"></div>
           </div>
         </div>
 
         <div class="mt-6 space-y-2.5">
-          <button onclick="window.ubApp.loginHm()"
+          <button onclick="window.ubApp.loginHm()" disabled
                   class="w-full py-3 rounded-xl ub-blue-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
             Login as Health Mitra →
           </button>
