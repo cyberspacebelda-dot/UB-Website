@@ -82,6 +82,21 @@
       width: 0;
       height: 22px;
     }
+    body { background: radial-gradient(circle at 12% 15%, #e0f2e8 0, transparent 34%), linear-gradient(135deg, #f5f8f5 0%, #eef4f0 55%, #f8fafc 100%); }
+    #loginView { position: relative; isolation: isolate; }
+    #loginView > div { max-width: 980px; }
+    #loginView > div > div { border-radius: 24px; box-shadow: 0 18px 55px rgba(15, 50, 31, .10); transition: transform .2s ease, box-shadow .2s ease; }
+    #loginView > div > div:hover { transform: translateY(-2px); box-shadow: 0 24px 65px rgba(15, 50, 31, .14); }
+    #loginView input { min-height: 48px; }
+    #loginView button { min-height: 46px; }
+    header { background-image: linear-gradient(110deg, #0e4328 0%, #125430 55%, #1b6740 100%); }
+    #dashboardView { min-height: calc(100vh - 76px); }
+    @media (max-width: 640px) {
+      #loginView { align-items: flex-start; padding-top: 22px; padding-bottom: 28px; }
+      #loginView > div { gap: 16px; }
+      #loginView > div > div { padding: 20px; border-radius: 20px; }
+      header .max-w-7xl { align-items: flex-start; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
