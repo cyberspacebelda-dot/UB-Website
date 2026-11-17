@@ -1,5 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
+  createPhoneRecaptcha, sendPhoneOtp, confirmPhoneOtp,
+  clearPhoneRecaptcha, observeFirebaseAuth, signOutFirebase
+} from "./firebase-auth.js";
+import { getAuthorizedOfficeProfile } from "./office-auth.js";
+import {
   getFirestore,
   collection,
   doc,
@@ -33,16 +38,6 @@ try {
 // ============================================================================
 // 2. ROLES, RANKS & PERMISSION HIERARCHY (IDENTICAL TO ANDROID APP)
 // ============================================================================
-const OFFICE_ROLES = {
-  SUPER_ADMIN: { role: "SUPER_ADMIN", adminName: "Super Admin (Belda HQ)", pin: "585583", isSuperAdmin: true, isBillingStaff: false, isJeet: false },
-  ADMIN_1: { role: "ADMIN_1", adminName: "Belda HQ Admin", pin: "7214", isSuperAdmin: true, isBillingStaff: false, isJeet: false },
-  STAFF_SONALI: { role: "STAFF_SONALI", adminName: "Sonali (Staff - Billing)", pin: "1001", isSuperAdmin: false, isBillingStaff: true, isJeet: false },
-  STAFF_KOUSHIK: { role: "STAFF_KOUSHIK", adminName: "Koushik (Staff - Billing)", pin: "1005", isSuperAdmin: false, isBillingStaff: true, isJeet: false },
-  STAFF_JEET: { role: "STAFF_JEET", adminName: "Jeet (Staff - Delivery)", pin: "1002", isSuperAdmin: false, isBillingStaff: false, isJeet: true },
-  ADMIN_GOPAL: { role: "ADMIN_GOPAL", adminName: "Gopal", pin: "1003", isSuperAdmin: false, isBillingStaff: false, isJeet: false },
-  ADMIN_MILAN: { role: "ADMIN_MILAN", adminName: "Milan", pin: "1004", isSuperAdmin: false, isBillingStaff: false, isJeet: false }
-};
-
 const MEMBER_RANK_OPTIONS = [
   { code: "MR", title: "Medical Representative", isHmTier: false, badgeHint: "Upline Rank" },
   { code: "HM1", title: "Health Mitra Tier 1", isHmTier: true, badgeHint: "Under MR • Sees All 3 HM Prices" },
@@ -256,7 +251,6 @@ function initFirestoreListeners() {
         photoUri: data.photoUri || "",
         sponsorHmId: data.sponsorHmId || "",
         rankCode: normalizeRankCode(data.rankCode || "HM1"),
-        password: data.password || "123456",
         creditBalance: Number(data.creditBalance || 0),
         totalSelfSales: Number(data.totalSelfSales || 0),
         totalTeamSales: Number(data.totalTeamSales || 0),
@@ -390,92 +384,83 @@ function showToast(msg) {
   window._toastTimer = setTimeout(() => el.classList.add("hidden"), 3500);
 }
 
-function loginOffice() {
-  const roleKey = document.getElementById("officeRoleSelect").value;
-  const pin = document.getElementById("officePinInput").value.trim();
-  const errEl = document.getElementById("officeLoginError");
-  const roleCfg = OFFICE_ROLES[roleKey];
+let officeRecaptchaReady = false;
+let officeListenersStarted = false;
 
-  if (!roleCfg || pin !== roleCfg.pin) {
-    errEl.textContent = "Invalid Office Access PIN for " + (roleCfg?.adminName || roleKey);
-    errEl.classList.remove("hidden");
-    return;
+function showLoginError(message) {
+  const el = document.getElementById("officeLoginError");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove("hidden");
+}
+
+async function sendOfficeOtp() {
+  const phone = document.getElementById("officePhoneInput")?.value.trim() || "";
+  const sendButton = document.getElementById("sendOfficeOtpButton");
+  try {
+    if (!officeRecaptchaReady) {
+      await createPhoneRecaptcha("officeRecaptchaContainer", "normal");
+      officeRecaptchaReady = true;
+    }
+    await sendPhoneOtp(phone);
+    document.getElementById("officeOtpSection")?.classList.remove("hidden");
+    document.getElementById("officeLoginError")?.classList.add("hidden");
+    showToast("OTP sent. Check your registered phone.");
+  } catch (error) {
+    clearPhoneRecaptcha();
+    officeRecaptchaReady = false;
+    showLoginError(error?.message || "Could not send OTP. Please try again.");
+  } finally {
+    if (sendButton) sendButton.disabled = false;
   }
-  errEl.classList.add("hidden");
+}
 
-  const canEditMedAndHm = Boolean(
-    roleCfg.isSuperAdmin ||
-    roleKey.includes("SONALI") ||
-    roleKey.includes("KOUSHIK")
-  );
+async function verifyOfficeOtp() {
+  const code = document.getElementById("officeOtpInput")?.value.trim() || "";
+  const verifyButton = document.getElementById("verifyOfficeOtpButton");
+  try {
+    if (verifyButton) verifyButton.disabled = true;
+    await confirmPhoneOtp(code);
+    showToast("Phone verified. Checking your Office authorization...");
+  } catch (error) {
+    showLoginError(error?.message || "OTP verification failed.");
+  } finally {
+    if (verifyButton) verifyButton.disabled = false;
+  }
+}
 
+async function applyAuthorizedOfficeUser(user) {
+  const profile = await getAuthorizedOfficeProfile(user);
   state.currentUser = {
-    type: "OFFICE",
-    role: roleCfg.role,
-    displayName: roleCfg.adminName,
-    hmCode: "",
-    rankCode: "OFFICE",
-    isSuperAdmin: roleCfg.isSuperAdmin,
-    canEditMedAndHm,
-    canVerifyBilling: roleCfg.isSuperAdmin || roleCfg.isBillingStaff,
-    canConfirmDelivery: roleCfg.isSuperAdmin || roleCfg.isJeet
+    type: "OFFICE", uid: profile.uid, role: profile.role,
+    category: profile.category, displayName: profile.displayName,
+    hmCode: "", rankCode: "OFFICE",
+    isSuperAdmin: profile.isSuperAdmin,
+    canEditMedAndHm: profile.canEditMedAndHm,
+    canVerifyBilling: profile.canVerifyBilling,
+    canConfirmDelivery: profile.canConfirmDelivery
   };
   state.activeTab = "PRICE_LIST";
-  localStorage.setItem("ub_web_session", JSON.stringify(state.currentUser));
+  if (!officeListenersStarted) {
+    initFirestoreListeners();
+    officeListenersStarted = true;
+  }
+  document.getElementById("officeLoginError")?.classList.add("hidden");
   enterDashboard();
 }
 
-function loginHm() {
-  const idOrMob = document.getElementById("hmLoginIdInput").value.trim();
-  const pass = document.getElementById("hmLoginPasswordInput").value.trim();
-  const errEl = document.getElementById("hmLoginError");
-
-  if (!idOrMob) {
-    errEl.textContent = "Please enter your HM Code or registered Mobile Number.";
-    errEl.classList.remove("hidden");
-    return;
+async function loginHm() {
+  const el = document.getElementById("hmLoginError");
+  if (el) {
+    el.textContent = "Health Mitra OTP login is being migrated. HM access will be enabled after secure Firebase account linking.";
+    el.classList.remove("hidden");
   }
-
-  const matched = state.healthMitras.find(
-    h => String(h.hmCode || "").toUpperCase() === idOrMob.toUpperCase() ||
-         String(h.mobileNo || "").trim() === idOrMob
-  );
-
-  if (!matched) {
-    errEl.textContent = "No Health Mitra found with ID or Mobile: " + idOrMob;
-    errEl.classList.remove("hidden");
-    return;
-  }
-
-  const expectedPass = String(matched.password || "123456").trim();
-  if (pass !== expectedPass) {
-    errEl.textContent = "Incorrect password. Please contact Sonali, Koushik, or Super Admin to reset if forgotten.";
-    errEl.classList.remove("hidden");
-    return;
-  }
-  errEl.classList.add("hidden");
-
-  state.currentUser = {
-    type: "HM",
-    role: "HEALTH_MITRA_USER",
-    displayName: matched.name,
-    hmCode: matched.hmCode,
-    rankCode: normalizeRankCode(matched.rankCode),
-    isSuperAdmin: false,
-    canEditMedAndHm: false,
-    canVerifyBilling: false,
-    canConfirmDelivery: false
-  };
-  state.billSelectedHmCode = matched.hmCode;
-  state.treeRootHmCode = matched.hmCode;
-  state.activeTab = "PRICE_LIST";
-  localStorage.setItem("ub_web_session", JSON.stringify(state.currentUser));
-  enterDashboard();
 }
 
-function logout() {
+async function logout() {
+  try { await signOutFirebase(); }
+  catch (error) { showToast(error?.message || "Sign-out failed."); }
   state.currentUser = null;
-  localStorage.removeItem("ub_web_session");
   document.getElementById("dashboardView").classList.add("hidden");
   document.getElementById("headerUserControls").classList.add("hidden");
   document.getElementById("headerUserControls").classList.remove("flex");
@@ -2476,7 +2461,9 @@ function escapeAttr(str) {
 }
 
 window.ubApp = {
-  loginOffice,
+  sendOfficeOtp,
+  verifyOfficeOtp,
+  loginHm,
   loginHm,
   logout,
   setTab(tabId) {
@@ -2559,12 +2546,20 @@ window.ubApp = {
   closeModal
 };
 
-// Initialize live Firestore sync & restore session if present
-initFirestoreListeners();
-try {
-  const saved = localStorage.getItem("ub_web_session");
-  if (saved) {
-    state.currentUser = JSON.parse(saved);
-    enterDashboard();
+// Firestore listeners start only after Firebase Auth and the UID-bound
+// Office profile are validated. Never restore a role object from localStorage.
+observeFirebaseAuth(async (user) => {
+  if (!user) {
+    state.currentUser = null;
+    document.getElementById("dashboardView")?.classList.add("hidden");
+    document.getElementById("headerUserControls")?.classList.add("hidden");
+    document.getElementById("loginView")?.classList.remove("hidden");
+    return;
   }
-} catch (_) {}
+  try {
+    await applyAuthorizedOfficeUser(user);
+  } catch (error) {
+    showLoginError(error?.message || "Office authorization failed.");
+    await signOutFirebase();
+  }
+});
