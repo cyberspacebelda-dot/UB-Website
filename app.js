@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   createPhoneRecaptcha, sendPhoneOtp, confirmPhoneOtp,
   clearPhoneRecaptcha, observeFirebaseAuth, signOutFirebase
@@ -27,7 +27,7 @@ const FIREBASE_CONFIG = {
 };
 const FIRESTORE_DATABASE_ID = "ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2";
 
-const firebaseApp = initializeApp(FIREBASE_CONFIG);
+const firebaseApp = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
 let db;
 try {
   db = getFirestore(firebaseApp, FIRESTORE_DATABASE_ID);
