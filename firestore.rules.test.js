@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { before, after, beforeEach, test } from "node:test";
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
 
@@ -6,14 +7,14 @@ const projectId = "ub-ayurved-rules-test";
 const rules = readFileSync("firestore.rules", "utf8");
 let testEnv;
 
-beforeAll(async () => {
+before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId,
     firestore: { rules }
   });
 });
 
-afterAll(async () => {
+after(async () => {
   await testEnv.cleanup();
 });
 
@@ -23,8 +24,8 @@ beforeEach(async () => {
     await setDoc(doc(ctx.firestore(), "office_staff_auth/phone-user-1"), {
       uid: "phone-user-1",
       phoneE164: "+919000000001",
-      role: "STAFF_SONALI",
-      category: "BILLING_STAFF",
+      staffRole: "STAFF_SONALI",
+      officeCategory: "BILLING_STAFF",
       active: true,
       displayName: "Test Staff"
     });
