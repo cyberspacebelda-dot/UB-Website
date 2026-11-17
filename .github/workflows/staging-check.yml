@@ -1,0 +1,33 @@
+name: UB Website Staging Checks
+
+on:
+  push:
+    branches:
+      - website-design-auth-integration
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-firestore-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check office-auth.js
+          node --check firebase-auth.js
+      - name: Run Firestore Rules Emulator tests
+        run: npm run test:rules
