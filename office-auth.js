@@ -35,12 +35,12 @@ export async function getAuthorizedOfficeProfile(user = auth.currentUser) {
   }
 
   const profile = snap.data();
-  const role = String(profile.role || "").trim().toUpperCase();
+  const role = String(profile.staffRole || "").trim().toUpperCase();
   const expectedCategory = ROLE_CATEGORIES[role];
 
   if (profile.active !== true) throw new Error("This Office account is inactive.");
   if (profile.uid !== user.uid) throw new Error("Office account UID mismatch.");
-  if (!expectedCategory || profile.category !== expectedCategory) {
+  if (!expectedCategory || profile.officeCategory !== expectedCategory) {
     throw new Error("Office role/category is invalid. Contact the authorized administrator.");
   }
   if (normalizePhone(profile.phoneE164) !== normalizePhone(user.phoneNumber)) {
