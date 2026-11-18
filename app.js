@@ -234,38 +234,15 @@ function getPriceForHmRank(med, rankCode) {
 // 5. START REAL-TIME FIRESTORE LISTENERS
 // ============================================================================
 function initFirestoreListeners() {
+  const listen = (...args) => officeUnsubscribers.push(onSnapshot(...args));
   // 1. Health Mitras
-  onSnapshot(collection(db, "health_mitras"), snap => {
-    const list = [];
-    snap.forEach(d => {
-      const data = d.data();
-      list.push({
-        id: d.id,
-        hmCode: data.hmCode || d.id,
-        name: data.name || "",
-        mobileNo: data.mobileNo || "",
-        hmAddress: data.hmAddress || "",
-        gpName: data.gpName || "",
-        pincode: data.pincode || "",
-        branch: data.branch || "Belda HQ",
-        photoUri: data.photoUri || "",
-        sponsorHmId: data.sponsorHmId || "",
-        rankCode: normalizeRankCode(data.rankCode || "HM1"),
-        creditBalance: Number(data.creditBalance || 0),
-        totalSelfSales: Number(data.totalSelfSales || 0),
-        totalTeamSales: Number(data.totalTeamSales || 0),
-        isVerified: Boolean(data.isVerified ?? data.verified ?? false),
-        verifiedBy: data.verifiedBy || "",
-        verifiedAt: Number(data.verifiedAt || 0),
-        isActive: data.isActive !== false
-      });
-    });
-    state.healthMitras = list.sort((a, b) => String(a.hmCode).localeCompare(String(b.hmCode)));
-    renderDashboard();
-  });
+  // Intentionally do not read health_mitras yet: legacy documents contain
+  // plaintext passwords. Re-enable only after server-side credential migration
+  // and UID-scoped HM profile rules are complete.
+
 
   // 2. Bills / Challans
-  onSnapshot(collection(db, "bills"), snap => {
+  listen(collection(db, "bills"), snap => {
     const list = [];
     snap.forEach(d => {
       const data = d.data();
@@ -306,7 +283,7 @@ function initFirestoreListeners() {
   });
 
   // 3. Medicines (stock & base entries)
-  onSnapshot(collection(db, "medicines"), snap => {
+  listen(collection(db, "medicines"), snap => {
     const list = [];
     snap.forEach(d => {
       const data = d.data();
@@ -317,7 +294,7 @@ function initFirestoreListeners() {
   });
 
   // 4. Medicine Price List 2026 Tier Overrides (commission_config/medicine_price_list_2026)
-  onSnapshot(doc(db, "commission_config", "medicine_price_list_2026"), snap => {
+  listen(doc(db, "commission_config", "medicine_price_list_2026"), snap => {
     if (snap.exists()) {
       const raw = snap.data()?.jsonPayload;
       if (raw) {
@@ -338,8 +315,9 @@ function initFirestoreListeners() {
     }
   });
 
-  // 5. Incentive Rules V2 (commission_config/incentive_rules_v2)
-  onSnapshot(doc(db, "commission_config", "incentive_rules_v2"), snap => {
+  // 5. Incentive Rules V2: Super Admin only.
+  if (state.currentUser?.isSuperAdmin) {
+  listen(doc(db, "commission_config", "incentive_rules_v2"), snap => {
     if (snap.exists()) {
       const raw = snap.data()?.jsonPayload;
       if (raw) {
@@ -358,9 +336,11 @@ function initFirestoreListeners() {
       }
     }
   });
+  }
 
-  // 6. Ledger
-  onSnapshot(collection(db, "ledger"), snap => {
+  // 6. Ledger: Super Admin and Billing Staff only.
+  if (state.currentUser?.isSuperAdmin || ["STAFF_SONALI", "STAFF_KOUSHIK"].includes(state.currentUser?.role)) {
+  listen(collection(db, "ledger"), snap => {
     const list = [];
     snap.forEach(d => {
       const data = d.data();
@@ -386,6 +366,7 @@ function showToast(msg) {
 
 let officeRecaptchaReady = false;
 let officeListenersStarted = false;
+let officeUnsubscribers = [];
 
 function showLoginError(message) {
   const el = document.getElementById("officeLoginError");
@@ -459,6 +440,17 @@ async function loginHm() {
 }
 
 async function logout() {
+  officeUnsubscribers.forEach(unsubscribe => {
+    try { unsubscribe(); } catch (_) {}
+  });
+  officeUnsubscribers = [];
+  officeListenersStarted = false;
+  state.healthMitras = [];
+  state.bills = [];
+  state.returns = [];
+  state.ledger = [];
+  state.firestoreMedicines = [];
+  state.medicineOverrides = {};
   try { await signOutFirebase(); }
   catch (error) { showToast(error?.message || "Sign-out failed."); }
   state.currentUser = null;
