@@ -8,8 +8,8 @@ const db = getFirestore(auth.app, FIRESTORE_DATABASE_ID);
 
 const ROLE_CATEGORIES = {
   SUPER_ADMIN: "SUPER_ADMIN",
-  ADMIN_GOPAL: "OFFICE_ADMIN",
-  ADMIN_MILAN: "OFFICE_ADMIN",
+  ADMIN_GOPAL: "BILLING_PRODUCTION_VIEWER",
+  ADMIN_MILAN: "BILLING_PRODUCTION_VIEWER",
   STAFF_SONALI: "BILLING_STAFF",
   STAFF_KOUSHIK: "BILLING_STAFF",
   STAFF_JEET: "DELIVERY_STAFF"
@@ -60,9 +60,10 @@ export async function getAuthorizedOfficeProfile(user = auth.currentUser) {
     hmCode: "",
     rankCode: "OFFICE",
     isSuperAdmin: role === "SUPER_ADMIN",
+    isReadOnlyAdmin: role === "ADMIN_GOPAL" || role === "ADMIN_MILAN",
     canEditMedAndHm: role === "SUPER_ADMIN" ||
       role === "STAFF_SONALI" || role === "STAFF_KOUSHIK",
-    canVerifyBilling: role === "SUPER_ADMIN" || role === "ADMIN_1" ||
+    canVerifyBilling: role === "SUPER_ADMIN" ||
       role === "STAFF_SONALI" || role === "STAFF_KOUSHIK",
     canConfirmDelivery: role === "SUPER_ADMIN" ||
       role === "STAFF_JEET"
