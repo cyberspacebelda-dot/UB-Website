@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // ============================================================================
-// 1. EXACT SAME FIREBASE & FIRESTORE DATABASE CONFIGURATION AS ANDROID APP
+// 1. SAME FIREBASE PROJECT & NAMED FIRESTORE DATABASE AS ANDROID APP
 // ============================================================================
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCeBji4psN338W78IMs1JSlWZpPEnCbCh4",
