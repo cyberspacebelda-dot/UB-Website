@@ -23,7 +23,7 @@ The files `hm-auth-preview.html` and `hm-auth-preview.js` remain isolated previe
 
 ## Mandatory blockers
 
-1. Reconcile the Firebase project discrepancy: Android audit project number `297378462371` versus the existing preview's `893264713046`.
+1. Firebase project identity is reconciled from the owner-supplied Web config and uploaded Android `google-services.json`: both identify `ub-ayurved` / project number `893264713046`. The older audit's `297378462371` conflicts with the actual uploaded config and is treated as stale/incorrect for this checkpoint. Authentication provider enablement, authorized domains, OAuth linkage, signing SHA-1, and named Firestore database selection still require read-only verification.
 2. Confirm the exact named Firestore database and remove any default-database fallback.
 3. Obtain Staff Gopal and Staff Milan exact Google email addresses.
 4. Inspect the complete Android source and precompiled JAR integration before changing login or repository code.
@@ -54,3 +54,12 @@ The owner confirmed the following interim identity mapping for the authenticatio
 - Super Admin email designation is provisional until the corresponding Firebase Auth UID is verified and a trusted Admin SDK/custom-claims provisioning process is implemented.
 - Later changes to the Super Admin identity must use the trusted provisioning process, with an auditable transfer/revocation sequence.
 - These are branch planning changes only. No Auth users, custom claims, Firestore documents, Rules, production data, or deployment were changed.
+
+
+## Firebase configuration reconciliation — 2026-11-18
+
+The owner supplied the Web Firebase SDK config and uploaded Android `google-services.json`. Both agree on Firebase Project ID `ub-ayurved` and Project Number / messaging sender ID `893264713046`. Android package is `com.aistudio.ubayurved.plkrtw`; Android app ID is `1:893264713046:android:8964bf3f130a0b90cff2f7`; Web app ID is `1:893264713046:web:1bc7da53d88c7c0bcff2f7`; Web auth domain is `ub-ayurved.firebaseapp.com`.
+
+The previous audit's `297378462371` is inconsistent with the uploaded Android config and is not used as the source of truth for this checkpoint. Distinct Android and Web API keys are expected for separate Firebase app registrations.
+
+Still to verify in Firebase Console: Google and Email/Password provider enablement, authorized domains, OAuth linkage, actual APK signing SHA-1, and the named Firestore database existence/region and web initialization. No Firebase Auth users, claims, Firestore data, Rules, production settings, or deployment were changed.
