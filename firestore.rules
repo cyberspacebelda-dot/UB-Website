@@ -6,25 +6,52 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // These claims must be assigned only by a trusted Admin SDK environment.
-    // Never let a browser or Android client assign custom claims.
-    function isOfficeAdmin() {
-      return signedIn() && request.auth.token.officeAdmin == true;
-    }
-
-    function isVerifiedPhoneUser() {
+    function hasOfficeProfile() {
       return signedIn() &&
-        request.auth.token.phone_number is string &&
-        request.auth.token.phone_number.size() > 0;
+        exists(/databases/$(database)/documents/office_staff_auth/$(request.auth.uid));
     }
 
-    function isOwnActiveOfficeProfile(uid) {
-      return isVerifiedPhoneUser() &&
-        request.auth.uid == uid &&
-        exists(/databases/$(database)/documents/office_staff_auth/$(uid)) &&
-        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.uid == request.auth.uid &&
-        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.phoneE164 == request.auth.token.phone_number &&
-        get(/databases/$(database)/documents/office_staff_auth/$(uid)).data.active == true;
+    function officeProfile() {
+      return get(/databases/$(database)/documents/office_staff_auth/$(request.auth.uid)).data;
+    }
+
+    function validOfficeIdentity() {
+      return hasOfficeProfile() &&
+        officeProfile().uid == request.auth.uid &&
+        officeProfile().active == true &&
+        request.auth.token.phone_number is string &&
+        officeProfile().phoneE164 == request.auth.token.phone_number &&
+        officeProfile().displayName is string &&
+        officeProfile().displayName.size() > 0;
+    }
+
+    function isAdmin() {
+      return validOfficeIdentity() &&
+        officeProfile().staffRole in ['SUPER_ADMIN', 'ADMIN_GOPAL', 'ADMIN_MILAN'] &&
+        officeProfile().officeCategory in ['SUPER_ADMIN', 'OFFICE_ADMIN'];
+    }
+
+    function isApprovedStaff() {
+      return validOfficeIdentity() &&
+        (
+          (officeProfile().staffRole == 'STAFF_SONALI' &&
+           officeProfile().officeCategory == 'BILLING_STAFF') ||
+          (officeProfile().staffRole == 'STAFF_KOUSHIK' &&
+           officeProfile().officeCategory == 'BILLING_STAFF') ||
+          (officeProfile().staffRole == 'STAFF_JEET' &&
+           officeProfile().officeCategory == 'DELIVERY_STAFF')
+        );
+    }
+
+    function isApprovedOfficeUser() {
+      return isAdmin() || isApprovedStaff();
+    }
+
+    function canEditMedicine() {
+      return isAdmin() ||
+        (validOfficeIdentity() &&
+         officeProfile().staffRole in ['STAFF_SONALI', 'STAFF_KOUSHIK'] &&
+         officeProfile().officeCategory == 'BILLING_STAFF');
     }
 
     function validMedicine(data) {
@@ -37,7 +64,9 @@ service cloud.firestore {
         data.patientPrice is number && data.patientPrice >= 0 &&
         data.stockQuantity is int && data.stockQuantity >= 0 &&
         data.lowStockThreshold is int && data.lowStockThreshold >= 0 &&
-        data.status in ['AVAILABLE', 'LOW_STOCK', 'OUT_OF_STOCK'] &&
+        data.status in ['IN_STOCK', 'AVAILABLE', 'LOW_STOCK', 'OUT_OF_STOCK'] &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time &&
+        (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time)) &&
         (!('branchStock' in data) || data.branchStock is map) &&
         (!('batchNumber' in data) || (data.batchNumber is string && data.batchNumber.size() <= 100)) &&
         (!('expiryDate' in data) || (data.expiryDate is string && data.expiryDate.size() <= 50)) &&
@@ -45,33 +74,50 @@ service cloud.firestore {
         (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 150));
     }
 
-    // A user can fetch only their own UID-keyed profile. No client can create,
-    // update, list, or delete office authorization profiles.
+    function validInventoryLog(data) {
+      return data.medicineId is string && data.medicineId.size() > 0 && data.medicineId.size() <= 100 &&
+        data.medicineName is string && data.medicineName.size() > 0 && data.medicineName.size() <= 200 &&
+        data.action is string &&
+        data.action in ['STOCK_IN', 'STOCK_OUT', 'PRICE_UPDATE', 'ENTRY_EDIT', 'ENTRY_CREATE', 'ENTRY_DELETE', 'MANUAL_STOCK_ENTRY', 'STOCK_RESET', 'QUICK_ADJUST'] &&
+        data.createdByUid == request.auth.uid &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        (!('note' in data) || (data.note is string && data.note.size() <= 500));
+    }
+
+    // Authorization profiles are provisioned only by a trusted server/admin process.
     match /office_staff_auth/{uid} {
-      allow get: if isOwnActiveOfficeProfile(uid) || isOfficeAdmin();
+      allow get: if (signedIn() && request.auth.uid == uid && validOfficeIdentity()) || isAdmin();
       allow list, create, update, delete: if false;
     }
 
-    // Public product catalogue read is retained for customer price lookup.
-    // Writes require a trusted custom claim, not an email address or client document.
+    // Medicine catalogue and stock data are visible only to enrolled, active office users.
     match /medicines/{medicineId} {
-      allow get, list: if true;
-      allow create: if isOfficeAdmin() &&
-        request.resource.data.createdAt is timestamp &&
-        request.resource.data.createdAt <= request.time &&
-        request.resource.data.updatedAt is timestamp &&
-        request.resource.data.updatedAt <= request.time &&
+      allow get, list: if isApprovedOfficeUser();
+      allow create: if canEditMedicine() && validMedicine(request.resource.data);
+      allow update: if canEditMedicine() &&
+        (!('createdAt' in resource.data) ||
+         request.resource.data.createdAt == resource.data.createdAt) &&
         validMedicine(request.resource.data);
-      allow update: if isOfficeAdmin() &&
-        request.resource.data.createdAt == resource.data.createdAt &&
-        request.resource.data.updatedAt is timestamp &&
-        request.resource.data.updatedAt <= request.time &&
-        validMedicine(request.resource.data);
-      allow delete: if isOfficeAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Business data is intentionally deny-by-default until the per-role
-    // access matrix and the UID-to-HM identity mapping are implemented.
+    // Inventory audit trail: approved staff/admin can read and append; nobody can alter history.
+    match /inventory_logs/{logId} {
+      allow get, list: if isApprovedOfficeUser();
+      allow create: if isApprovedOfficeUser() && validInventoryLog(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // The website's shared medicine price override document is visible to office users.
+    // Medicine editors may update only this document; other configuration is admin-only.
+    match /commission_config/{configId} {
+      allow get, list: if isApprovedOfficeUser();
+      allow create, update: if
+        (configId == 'medicine_price_list_2026' && canEditMedicine()) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // These business collections remain closed until their role-specific data matrix is audited.
     match /health_mitras/{documentId} {
       allow read, write: if false;
     }
@@ -84,17 +130,10 @@ service cloud.firestore {
     match /ledger/{documentId} {
       allow read, write: if false;
     }
-    match /commission_config/{documentId} {
-      allow read, write: if false;
-    }
-    match /inventory_logs/{documentId} {
-      allow read, write: if false;
-    }
     match /admins/{documentId} {
       allow read, write: if false;
     }
 
-    // Catch-all deny. No broad allow rules elsewhere.
     match /{document=**} {
       allow read, write: if false;
     }
