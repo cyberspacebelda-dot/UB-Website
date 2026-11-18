@@ -44,3 +44,23 @@ This work is isolated to branch `hm-google-email-auth-v1`. Do not merge or deplo
 - Confirm Office/Admin behavior is unchanged.
 - Confirm the GitHub Pages workflow still deploys only from `main`.
 - Do not merge to `main` or deploy until all gates pass.
+
+## Branch implementation checkpoint — isolated HM Auth preview
+
+A separate preview has been added at `hm-auth-preview.html` with its module `hm-auth-preview.js`.
+
+- Uses Firebase Google Sign-In and Email/Password sign-in.
+- Email/password registration sends an email verification link; unverified users cannot submit a request.
+- Creates only `hm_registration_requests/{uid}` with applicant profile fields and initial `PENDING` status.
+- Applicant input cannot set HM code, rank, role, approval, password fields in Firestore, or business data.
+- The preview reads no `health_mitras`, `medicines`, `bills`, `returns`, `ledger`, or `commission_config` data.
+- It is deliberately isolated and is not wired into the existing portal yet.
+
+### Mandatory blockers before integration
+1. The authoritative deployed Firestore Rules are not in this repository. The request write must be explicitly constrained to the authenticated UID, verified email, allowed applicant fields, and immutable pending status. Do not assume the preview's write is permitted or secure until emulator tests prove it.
+2. No trusted backend / Admin SDK approval endpoint or custom-claims provisioning process exists in the repository.
+3. The existing main portal still contains the legacy HM password flow and startup-wide listeners. This preview does not make the existing portal production-safe.
+4. Office roles are still PINs embedded in client JavaScript and cannot safely be used as Firestore authorization.
+5. Android source/JAR compatibility, deployed Rules, and the Firebase project-number discrepancy still require reconciliation.
+
+No Production Rules, live data, Auth users, main branch, or deployment were changed.
