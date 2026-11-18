@@ -350,6 +350,7 @@ function initFirestoreListeners() {
     state.ledger = list.sort((a, b) => b.createdAtMs - a.createdAtMs);
     renderDashboard();
   });
+  }
 }
 
 // ============================================================================
