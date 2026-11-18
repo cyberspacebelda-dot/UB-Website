@@ -23,8 +23,8 @@ The files `hm-auth-preview.html` and `hm-auth-preview.js` remain isolated previe
 
 ## Mandatory blockers
 
-1. Firebase project identity is reconciled from the owner-supplied Web config and uploaded Android `google-services.json`: both identify `ub-ayurved` / project number `893264713046`. The older audit's `297378462371` conflicts with the actual uploaded config and is treated as stale/incorrect for this checkpoint. Authentication provider enablement, authorized domains, OAuth linkage, signing SHA-1, and named Firestore database selection still require read-only verification.
-2. Confirm the exact named Firestore database and remove any default-database fallback.
+1. Firebase project identity is reconciled from the owner-supplied Web config and uploaded Android `google-services.json`: both identify `ub-ayurved` / project number `893264713046`. The older audit's `297378462371` conflicts with the actual uploaded config and is treated as stale/incorrect for this checkpoint. Owner reports Google and Email/Password providers enabled, website domain authorized, Android release signing SHA-1 checked, and the named Firestore database confirmed in `asia-east1`. Website named-database selection has been corrected; Android source-level initialization remains to be verified.
+2. Confirmed by owner in Firebase Console: named Firestore database `ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2`, region `asia-east1`. Website initialization now selects this named database directly and has no `(default)` fallback. Android source initialization still needs a source-level verification in its owning repository.
 3. Obtain Staff Gopal and Staff Milan exact Google email addresses.
 4. Inspect the complete Android source and precompiled JAR integration before changing login or repository code.
 5. Implement trusted UID-based role provisioning and HM approval; client-side role flags and office PINs are not authorization.
@@ -63,3 +63,13 @@ The owner supplied the Web Firebase SDK config and uploaded Android `google-serv
 The previous audit's `297378462371` is inconsistent with the uploaded Android config and is not used as the source of truth for this checkpoint. Distinct Android and Web API keys are expected for separate Firebase app registrations.
 
 Still to verify in Firebase Console: Google and Email/Password provider enablement, authorized domains, OAuth linkage, actual APK signing SHA-1, and the named Firestore database existence/region and web initialization. No Firebase Auth users, claims, Firestore data, Rules, production settings, or deployment were changed.
+
+
+## Firestore database verification and Website correction — 2026-11-18
+
+- Owner-confirmed Firestore Database ID: `ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2`.
+- Owner-confirmed Firestore region: `asia-east1`. This is distinct from the Realtime Database URL region and does not need to match it.
+- Website `app.js` now uses the registered Web Firebase App ID `1:893264713046:web:1bc7da53d88c7c0bcff2f7` (not the Android App ID).
+- Website `app.js` now initializes Firestore directly with the verified named database ID and has no silent fallback to `(default)`.
+- Android's uploaded `google-services.json` confirms the Firebase project/app identity, but does not itself prove which Firestore database ID the Android runtime selects. The Android source repository was not part of this website branch, so its initialization has not been changed or independently verified here.
+- No Production branch, Firebase Console setting, Firestore data, Rules, Auth users, claims, or deployment was changed.
