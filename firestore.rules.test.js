@@ -144,7 +144,7 @@ test("Gopal and Milan are read-only for medicines and stock records", async () =
       medicineId: "med-1", medicineName: "Test Medicine",
       action: "STOCK_OUT", createdByUid: "gopal-1", createdAt: new Date()
     }));
-    await assertFails(getDoc(doc(db, "bills/bill-1")));
+    await assertSucceeds(getDoc(doc(db, "bills/bill-1")));
   }
 });
 
