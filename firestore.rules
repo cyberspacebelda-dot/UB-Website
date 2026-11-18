@@ -201,7 +201,148 @@ service cloud.firestore {
         request.resource.data.onlinePaymentTime.size() <= 50;
     }
 
-    // HM identity remains closed until UID mapping and password migration are complete.
+    // HM self-registration is isolated from legacy health_mitras documents,
+    // which may contain sensitive legacy fields such as plaintext passwords.
+    match /hm_registration_requests/{uid} {
+      allow create: if signedIn() &&
+        request.auth.uid == uid &&
+        request.resource.data.keys().hasOnly([
+          'uid', 'phoneE164', 'name', 'mobileNo', 'hmAddress',
+          'sponsorHmId', 'rankCode', 'status', 'createdAt'
+        ]) &&
+        request.resource.data.uid == uid &&
+        request.resource.data.phoneE164 == request.auth.token.phone_number &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 2 &&
+        request.resource.data.name.size() <= 120 &&
+        request.resource.data.mobileNo == request.auth.token.phone_number &&
+        request.resource.data.hmAddress is string &&
+        request.resource.data.hmAddress.size() <= 300 &&
+        request.resource.data.sponsorHmId is string &&
+        request.resource.data.sponsorHmId.size() <= 30 &&
+        request.resource.data.rankCode in ['HM1', 'HM2', 'HM3', 'MR', 'SR', 'SE', 'SO', 'TSM', 'ASM', 'RSM'] &&
+        request.resource.data.status == 'PENDING' &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.createdAt <= request.time;
+      allow get: if (signedIn() && request.auth.uid == uid &&
+        resource.data.uid == request.auth.uid &&
+        resource.data.phoneE164 == request.auth.token.phone_number) || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow update: if isSuperAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'hmCode', 'reviewedAt', 'reviewedBy']) &&
+        request.resource.data.status in ['APPROVED', 'REJECTED'] &&
+        request.resource.data.reviewedAt is timestamp &&
+        request.resource.data.reviewedAt <= request.time &&
+        request.resource.data.reviewedBy == officeProfile().displayName &&
+        (request.resource.data.status != 'APPROVED' ||
+          (request.resource.data.hmCode is string &&
+           request.resource.data.hmCode.matches('^HM[A-Z0-9]{3,12}
+
+    // Office bill access is role-scoped. No client can delete a bill.
+    match /bills/{billId} {
+      allow get, list: if isApprovedOfficeUser();
+      allow create: if (isSuperAdmin() || isBillingStaff()) &&
+        validBill(request.resource.data);
+      allow update: if isSuperAdmin() ||
+        (isBillingStaff() && (validBillingVerificationUpdate() || validOnlinePaymentUpdate())) ||
+        (isDeliveryStaff() && validDeliveryUpdate());
+      allow delete: if false;
+    }
+
+    // Returns stay denied until Android's actual return schema and transitions are audited.
+    match /returns/{returnId} {
+      allow read, write: if false;
+    }
+
+    // Ledger is read-only in the browser. Balance posting must use a trusted workflow.
+    match /ledger/{ledgerId} {
+      allow get, list: if isSuperAdmin() || isBillingStaff();
+      allow create, update, delete: if false;
+    }
+    match /admins/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+})));
+      allow delete: if false;
+    }
+
+    // A safe UID-keyed projection is the only HM profile exposed to HM clients.
+    // Legacy health_mitras documents remain closed until a separate data migration.
+    match /hm_auth_profiles/{uid} {
+      allow get: if (signedIn() && request.auth.uid == uid &&
+        resource.data.uid == request.auth.uid &&
+        resource.data.phoneE164 == request.auth.token.phone_number &&
+        resource.data.status == 'APPROVED') || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow create: if isSuperAdmin() &&
+        exists(/databases/$(database)/documents/hm_registration_requests/$(uid)) &&
+        get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.status == 'PENDING' &&
+        request.resource.data.keys().hasOnly([
+          'uid', 'phoneE164', 'hmCode', 'name', 'mobileNo',
+          'hmAddress', 'sponsorHmId', 'rankCode', 'status',
+          'active', 'createdAt', 'approvedAt'
+        ]) &&
+        request.resource.data.uid == uid &&
+        request.resource.data.phoneE164 ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.phoneE164 &&
+        request.resource.data.hmCode is string &&
+        request.resource.data.hmCode.matches('^HM[A-Z0-9]{3,12}
+
+    // Office bill access is role-scoped. No client can delete a bill.
+    match /bills/{billId} {
+      allow get, list: if isApprovedOfficeUser();
+      allow create: if (isSuperAdmin() || isBillingStaff()) &&
+        validBill(request.resource.data);
+      allow update: if isSuperAdmin() ||
+        (isBillingStaff() && (validBillingVerificationUpdate() || validOnlinePaymentUpdate())) ||
+        (isDeliveryStaff() && validDeliveryUpdate());
+      allow delete: if false;
+    }
+
+    // Returns stay denied until Android's actual return schema and transitions are audited.
+    match /returns/{returnId} {
+      allow read, write: if false;
+    }
+
+    // Ledger is read-only in the browser. Balance posting must use a trusted workflow.
+    match /ledger/{ledgerId} {
+      allow get, list: if isSuperAdmin() || isBillingStaff();
+      allow create, update, delete: if false;
+    }
+    match /admins/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}) &&
+        request.resource.data.name ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.name &&
+        request.resource.data.mobileNo ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.mobileNo &&
+        request.resource.data.hmAddress ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.hmAddress &&
+        request.resource.data.sponsorHmId ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.sponsorHmId &&
+        request.resource.data.rankCode ==
+          get(/databases/$(database)/documents/hm_registration_requests/$(uid)).data.rankCode &&
+        request.resource.data.status == 'APPROVED' &&
+        request.resource.data.active == true &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.approvedAt is timestamp &&
+        request.resource.data.approvedAt <= request.time;
+      allow update, delete: if false;
+    }
+
+    // Legacy HM documents remain blocked; they contain data requiring migration.
     match /health_mitras/{documentId} {
       allow read, write: if false;
     }
