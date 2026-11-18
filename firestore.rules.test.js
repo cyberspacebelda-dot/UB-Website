@@ -319,3 +319,78 @@ test("Health Mitra and Returns collections remain closed until secure identity a
     await assertFails(deleteDoc(doc(db, "returns/return-1")));
   }
 });
+
+
+test("HM can create only their own phone-verified pending registration request", async () => {
+  const hmDb = testEnv.authenticatedContext("hm-new-1", {
+    phone_number: "+919000000111"
+  }).firestore();
+  await assertSucceeds(setDoc(doc(hmDb, "hm_registration_requests/hm-new-1"), {
+    uid: "hm-new-1", phoneE164: "+919000000111",
+    name: "New Health Mitra", mobileNo: "+919000000111",
+    hmAddress: "Belda", sponsorHmId: "", rankCode: "HM1",
+    status: "PENDING", createdAt: new Date()
+  }));
+  await assertFails(setDoc(doc(hmDb, "hm_registration_requests/another-user"), {
+    uid: "another-user", phoneE164: "+919000000111",
+    name: "Spoofed", mobileNo: "+919000000111",
+    hmAddress: "", sponsorHmId: "", rankCode: "HM1",
+    status: "PENDING", createdAt: new Date()
+  }));
+  await assertFails(setDoc(doc(hmDb, "hm_registration_requests/hm-new-1"), {
+    uid: "hm-new-1", phoneE164: "+919000000111",
+    name: "New Health Mitra", mobileNo: "+919000000111",
+    hmAddress: "Belda", sponsorHmId: "", rankCode: "HM1",
+    status: "APPROVED", active: true, createdAt: new Date()
+  }));
+});
+
+test("HM registration request is private and cannot be approved by the applicant", async () => {
+  const hmDb = testEnv.authenticatedContext("hm-new-1", {
+    phone_number: "+919000000111"
+  }).firestore();
+  await testEnv.withSecurityRulesDisabled(async ctx => {
+    await setDoc(doc(ctx.firestore(), "hm_registration_requests/hm-new-1"), {
+      uid: "hm-new-1", phoneE164: "+919000000111",
+      name: "New Health Mitra", mobileNo: "+919000000111",
+      hmAddress: "Belda", sponsorHmId: "", rankCode: "HM1",
+      status: "PENDING", createdAt: new Date()
+    });
+  });
+  await assertSucceeds(getDoc(doc(hmDb, "hm_registration_requests/hm-new-1")));
+  await assertFails(getDoc(doc(hmDb, "hm_registration_requests/other-hm")));
+  await assertFails(updateDoc(doc(hmDb, "hm_registration_requests/hm-new-1"), {
+    status: "APPROVED", hmCode: "HM999",
+    reviewedAt: new Date(), reviewedBy: "Applicant"
+  }));
+});
+
+test("only Super Admin can approve HM and provision safe UID profile", async () => {
+  const request = {
+    uid: "hm-new-1", phoneE164: "+919000000111",
+    name: "New Health Mitra", mobileNo: "+919000000111",
+    hmAddress: "Belda", sponsorHmId: "", rankCode: "HM1",
+    status: "PENDING", createdAt: new Date()
+  };
+  await testEnv.withSecurityRulesDisabled(async ctx => {
+    await setDoc(doc(ctx.firestore(), "hm_registration_requests/hm-new-1"), request);
+  });
+  const profile = {
+    uid: "hm-new-1", phoneE164: "+919000000111", hmCode: "HM111",
+    name: "New Health Mitra", mobileNo: "+919000000111",
+    hmAddress: "Belda", sponsorHmId: "", rankCode: "HM1",
+    status: "APPROVED", active: true,
+    createdAt: new Date(), approvedAt: new Date()
+  };
+  await assertFails(setDoc(doc(staffDb(), "hm_auth_profiles/hm-new-1"), profile));
+  await assertSucceeds(setDoc(doc(adminDb(), "hm_auth_profiles/hm-new-1"), profile));
+  await assertSucceeds(updateDoc(doc(adminDb(), "hm_registration_requests/hm-new-1"), {
+    status: "APPROVED", hmCode: "HM111",
+    reviewedAt: new Date(), reviewedBy: "Test Super Admin"
+  }));
+  const hmDb = testEnv.authenticatedContext("hm-new-1", {
+    phone_number: "+919000000111"
+  }).firestore();
+  await assertSucceeds(getDoc(doc(hmDb, "hm_auth_profiles/hm-new-1")));
+  await assertFails(getDocs(collection(hmDb, "hm_auth_profiles")));
+});
