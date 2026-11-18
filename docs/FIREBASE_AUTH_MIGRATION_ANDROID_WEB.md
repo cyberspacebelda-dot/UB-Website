@@ -48,8 +48,9 @@ There are no `ADMIN_2` or `ADMIN_3` roles. Gopal and Milan are Staff, not Admins
 
 ### Phase 1 — inventory and reconciliation
 - Confirm Android source repository/branch and enumerate all login screens, role checks, repositories, listeners, and privileged writes.
-- Reconcile Firebase project identity: Android audit lists project number `297378462371`; the existing website preview config lists `893264713046`. Stop before auth integration until the intended Firebase project and named Firestore database are confirmed.
-- Verify the exact Firestore database ID used by Android and website; remove any silent default-database fallback.
+- Reconcile Firebase project identity using the uploaded Android `google-services.json` and the Web SDK config supplied by the owner on 2026-11-18. Both identify project ID `ub-ayurved` and project number / messaging sender ID `893264713046`; the Android app ID is `1:893264713046:android:8964bf3f130a0b90cff2f7` for package `com.aistudio.ubayurved.plkrtw`, and the Web app ID is `1:893264713046:web:1bc7da53d88c7c0bcff2f7`. The earlier audit value `297378462371` conflicts with the actual uploaded config and must be treated as a stale/incorrect audit value unless a newer authoritative Android config proves otherwise.
+- The Android and Web API keys are different, which is expected for separately registered Firebase apps; do not replace one with the other. Confirm the Android signing certificate SHA-1 (`e3235ed38944f456b6c9c895d3b5da0c000cc802`) against the signing key used for the distributed APK before relying on Google Sign-In. The Web config's `authDomain` is `ub-ayurved.firebaseapp.com`.
+- The named Firestore database ID reported by the Android audit is `ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2`; this is separate from the Firebase project identity and must be explicitly selected by both clients. Remove any silent default-database fallback. Web database initialization and Console database existence/region still require read-only verification.
 - Obtain exact Google emails for Staff Gopal and Staff Milan. Keep these roles unprovisioned until confirmed.
 - Identify whether Public Customer requires a login provider; do not invent one before confirming app behavior.
 
@@ -91,7 +92,9 @@ There are no `ADMIN_2` or `ADMIN_3` roles. Gopal and Milan are Staff, not Admins
 ## Known blockers / not yet verified
 
 - Staff Gopal and Staff Milan exact Google email addresses are not supplied.
-- Firebase project-number discrepancy (Android audit: `297378462371`; existing web preview: `893264713046`) is unresolved.
+- Firebase project identity is reconciled from the actual uploaded Android config and owner-supplied Web config: both point to `ub-ayurved` / `893264713046`. The earlier audit's `297378462371` is inconsistent and should not be used as the Android config source of truth.
+- Firebase Authentication provider enablement (Google and Email/Password), authorized domains, Web OAuth client linkage, and Android signing-certificate SHA-1 have not yet been independently verified in Firebase Console.
+- The Web and Android Firebase API keys are distinct app-specific keys; verify their API restrictions and allowed APIs rather than forcing them to match.
 - The complete Android source/JAR compatibility path and exact role-specific permissions still need code-level inspection.
 - The deployed Firestore Rules and all nested collection/subcollection schemas need authoritative export and emulator coverage.
 - A trusted backend approval/provisioning endpoint is not yet present in the inspected website repository.
@@ -100,3 +103,24 @@ There are no `ADMIN_2` or `ADMIN_3` roles. Gopal and Milan are Staff, not Admins
 ## Current checkpoint
 
 This document records the approved role naming and migration scope. It does not create Firebase Auth users, assign claims, modify Firestore, change Production Rules, merge branches, or deploy anything.
+
+
+## Firebase project configuration reconciliation — 2026-11-18
+
+Owner supplied the Web SDK config and uploaded the Android `google-services.json`. Both configs agree on:
+- Project ID: `ub-ayurved`
+- Project number / messaging sender ID: `893264713046`
+- Storage bucket: `ub-ayurved.firebasestorage.app`
+- Realtime Database URL: `https://ub-ayurved-default-rtdb.asia-southeast1.firebasedatabase.app`
+- Android package: `com.aistudio.ubayurved.plkrtw`
+- Android app ID: `1:893264713046:android:8964bf3f130a0b90cff2f7`
+- Web app ID: `1:893264713046:web:1bc7da53d88c7c0bcff2f7`
+- Web auth domain: `ub-ayurved.firebaseapp.com`
+
+The Android OAuth client entries include an Android client associated with certificate SHA-1 `e3235ed38944f456b6c9c895d3b5da0c000cc802` and a Web-type OAuth client. Confirm the SHA-1 against the actual release/debug signing certificate before Google Sign-In testing. Different Android and Web Firebase API keys are expected for separate app registrations.
+
+The prior audit's Android project number `297378462371` does not match the uploaded Android config. For this checkpoint, the actual uploaded `google-services.json` is the configuration evidence and `893264713046` is the reconciled project number. If a different Android config is later supplied from the current build, re-check before implementation.
+
+Still pending read-only verification in Firebase Console: Authentication providers enabled (Google and Email/Password), authorized domains, OAuth client linkage, and named Firestore database existence/region. The Firebase project config alone does not prove that Authentication providers are enabled.
+
+No Auth users, claims, Firestore data, Rules, deployment, or production settings were changed.
