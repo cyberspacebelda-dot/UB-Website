@@ -68,7 +68,18 @@ beforeEach(async () => {
       medicineId: "med-1", medicineName: "Test Medicine",
       action: "STOCK_IN", createdByUid: "staff-1", createdAt: new Date()
     });
-    await setDoc(doc(db, "bills/bill-1"), { total: 100 });
+    await setDoc(doc(db, "bills/bill-1"), {
+      billNumber: "VD/00001", hmCode: "HM001", hmName: "Test HM",
+      hmMobile: "9000000000", hmAddress: "Belda", gpName: "Belda",
+      pincode: "721424", branch: "Belda HQ", patientName: "",
+      patientMobile: "", billingMode: "DISPENSARY_CHALLAN",
+      paymentMode: "CASH", items: [{ medicineId: "med-1", quantity: 1 }],
+      subtotal: 80, discount: 20, netAmount: 80, previousBalance: 0,
+      currentBalance: 0, isChallanOnly: true, status: "PENDING",
+      verifiedBy: "", verifiedAt: 0, deliveredBy: "", deliveredAt: 0,
+      stockDeducted: false, notes: "",
+      createdAt: new Date(), updatedAt: new Date()
+    });
     await setDoc(doc(db, "commission_config/medicine_price_list_2026"), {
       jsonPayload: "[]", updatedBy: "test", updatedAt: Date.now()
     });
@@ -226,11 +237,72 @@ test("only Super Admin can read and update incentive configuration", async () =>
   await assertFails(getDoc(doc(staffDb(), "commission_config/incentive_rules_v2")));
 });
 
-test("business records remain denied until their collection-specific matrix is implemented", async () => {
+test("billing staff can create bills and verify payment without deleting records", async () => {
+  const db = staffDb();
+  const bill = {
+    billNumber: "VD/00002", hmCode: "HM002", hmName: "New HM",
+    hmMobile: "9000000001", hmAddress: "Belda", gpName: "Belda",
+    pincode: "721424", branch: "Belda HQ", patientName: "",
+    patientMobile: "", billingMode: "DISPENSARY_CHALLAN",
+    paymentMode: "CASH", items: [{ medicineId: "med-1", quantity: 1 }],
+    subtotal: 80, discount: 20, netAmount: 80, previousBalance: 0,
+    currentBalance: 0, isChallanOnly: true, status: "PAID",
+    verifiedBy: "Test Billing Staff", verifiedAt: Date.now(),
+    deliveredBy: "", deliveredAt: 0, stockDeducted: false, notes: "",
+    createdAt: new Date(), updatedAt: new Date()
+  };
+  await assertSucceeds(setDoc(doc(db, "bills/new-bill"), bill));
+  await assertSucceeds(updateDoc(doc(db, "bills/bill-1"), {
+    status: "PAID", verifiedBy: "Test Billing Staff",
+    verifiedAt: Date.now(), updatedAt: new Date()
+  }));
+  await assertFails(deleteDoc(doc(db, "bills/bill-1")));
+});
+
+test("view-only admins can read bills but cannot create or modify them", async () => {
+  for (const db of [gopalDb(), milanDb()]) {
+    await assertSucceeds(getDoc(doc(db, "bills/bill-1")));
+    await assertFails(updateDoc(doc(db, "bills/bill-1"), {
+      status: "PAID", verifiedBy: "Viewer", verifiedAt: Date.now(), updatedAt: new Date()
+    }));
+    await assertFails(deleteDoc(doc(db, "bills/bill-1")));
+  }
+});
+
+test("delivery staff can update only delivery fields on bills", async () => {
+  const db = jeetDb();
+  await assertSucceeds(getDoc(doc(db, "bills/bill-1")));
+  await assertSucceeds(updateDoc(doc(db, "bills/bill-1"), {
+    status: "DELIVERED", deliveredBy: "Test Delivery Staff",
+    deliveredAt: Date.now(), stockDeducted: true, updatedAt: new Date()
+  }));
+  await assertFails(updateDoc(doc(db, "bills/bill-1"), {
+    status: "PAID", verifiedBy: "Test Delivery Staff",
+    verifiedAt: Date.now(), updatedAt: new Date()
+  }));
+  await assertFails(deleteDoc(doc(db, "bills/bill-1")));
+});
+
+test("ledger is read-only for Super Admin and Billing Staff", async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "ledger/entry-1"), {
+      hmCode: "HM001", balance: 100, createdAt: new Date()
+    });
+  });
+  await assertSucceeds(getDoc(doc(adminDb(), "ledger/entry-1")));
+  await assertSucceeds(getDoc(doc(staffDb(), "ledger/entry-1")));
+  await assertFails(getDoc(doc(gopalDb(), "ledger/entry-1")));
+  await assertFails(getDoc(doc(jeetDb(), "ledger/entry-1")));
+  await assertFails(updateDoc(doc(staffDb(), "ledger/entry-1"), { balance: 0 }));
+  await assertFails(deleteDoc(doc(adminDb(), "ledger/entry-1")));
+});
+
+test("Health Mitra and Returns collections remain closed until secure identity and schema migration", async () => {
   for (const db of [staffDb(), adminDb(), gopalDb(), milanDb(), jeetDb()]) {
     await assertFails(getDoc(doc(db, "health_mitras/HM001")));
-    await assertFails(getDoc(doc(db, "bills/bill-1")));
     await assertFails(getDoc(doc(db, "returns/return-1")));
-    await assertFails(getDoc(doc(db, "ledger/entry-1")));
+    await assertFails(setDoc(doc(db, "returns/return-2"), { hmCode: "HM001" }));
+    await assertFails(deleteDoc(doc(db, "bills/bill-1")));
+    await assertFails(deleteDoc(doc(db, "returns/return-1")));
   }
 });
