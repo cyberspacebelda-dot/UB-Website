@@ -25,33 +25,45 @@ service cloud.firestore {
         officeProfile().displayName.size() > 0;
     }
 
-    function isAdmin() {
+    function isSuperAdmin() {
       return validOfficeIdentity() &&
-        officeProfile().staffRole in ['SUPER_ADMIN', 'ADMIN_GOPAL', 'ADMIN_MILAN'] &&
-        officeProfile().officeCategory in ['SUPER_ADMIN', 'OFFICE_ADMIN'];
+        officeProfile().staffRole == 'SUPER_ADMIN' &&
+        officeProfile().officeCategory == 'SUPER_ADMIN';
+    }
+
+    // Compatibility alias: administrator-only operations mean SUPER_ADMIN only.
+    function isAdmin() {
+      return isSuperAdmin();
+    }
+
+    function isBillingStaff() {
+      return validOfficeIdentity() &&
+        officeProfile().staffRole in ['STAFF_SONALI', 'STAFF_KOUSHIK'] &&
+        officeProfile().officeCategory == 'BILLING_STAFF';
+    }
+
+    function isDeliveryStaff() {
+      return validOfficeIdentity() &&
+        officeProfile().staffRole == 'STAFF_JEET' &&
+        officeProfile().officeCategory == 'DELIVERY_STAFF';
+    }
+
+    function isOfficeViewer() {
+      return validOfficeIdentity() &&
+        officeProfile().staffRole in ['ADMIN_GOPAL', 'ADMIN_MILAN'] &&
+        officeProfile().officeCategory == 'BILLING_PRODUCTION_VIEWER';
     }
 
     function isApprovedStaff() {
-      return validOfficeIdentity() &&
-        (
-          (officeProfile().staffRole == 'STAFF_SONALI' &&
-           officeProfile().officeCategory == 'BILLING_STAFF') ||
-          (officeProfile().staffRole == 'STAFF_KOUSHIK' &&
-           officeProfile().officeCategory == 'BILLING_STAFF') ||
-          (officeProfile().staffRole == 'STAFF_JEET' &&
-           officeProfile().officeCategory == 'DELIVERY_STAFF')
-        );
+      return isBillingStaff() || isDeliveryStaff();
     }
 
     function isApprovedOfficeUser() {
-      return isAdmin() || isApprovedStaff();
+      return isSuperAdmin() || isOfficeViewer() || isApprovedStaff();
     }
 
     function canEditMedicine() {
-      return isAdmin() ||
-        (validOfficeIdentity() &&
-         officeProfile().staffRole in ['STAFF_SONALI', 'STAFF_KOUSHIK'] &&
-         officeProfile().officeCategory == 'BILLING_STAFF');
+      return isSuperAdmin() || isBillingStaff();
     }
 
     function validMedicine(data) {
@@ -86,11 +98,12 @@ service cloud.firestore {
 
     // Authorization profiles are provisioned only by a trusted server/admin process.
     match /office_staff_auth/{uid} {
-      allow get: if (signedIn() && request.auth.uid == uid && validOfficeIdentity()) || isAdmin();
+      allow get: if (signedIn() && request.auth.uid == uid && validOfficeIdentity()) || isSuperAdmin();
       allow list, create, update, delete: if false;
     }
 
-    // Medicine catalogue and stock data are visible only to enrolled, active office users.
+    // Medicine catalogue/stock is readable by approved office users.
+    // Only Super Admin and approved Billing Staff may change medicine records.
     match /medicines/{medicineId} {
       allow get, list: if isApprovedOfficeUser();
       allow create: if canEditMedicine() && validMedicine(request.resource.data);
@@ -98,26 +111,33 @@ service cloud.firestore {
         (!('createdAt' in resource.data) ||
          request.resource.data.createdAt == resource.data.createdAt) &&
         validMedicine(request.resource.data);
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
-    // Inventory audit trail: approved staff/admin can read and append; nobody can alter history.
+    // Inventory audit trail is readable by approved office users and append-only.
+    // Delivery/Billing staff may append; view-only admins cannot write.
     match /inventory_logs/{logId} {
       allow get, list: if isApprovedOfficeUser();
-      allow create: if isApprovedOfficeUser() && validInventoryLog(request.resource.data);
+      allow create: if (isSuperAdmin() || isApprovedStaff()) &&
+        validInventoryLog(request.resource.data);
       allow update, delete: if false;
     }
 
-    // The website's shared medicine price override document is visible to office users.
-    // Medicine editors may update only this document; other configuration is admin-only.
+    // Limit each configuration document to its own role policy.
     match /commission_config/{configId} {
-      allow get, list: if isApprovedOfficeUser();
+      allow get, list: if
+        (configId == 'medicine_price_list_2026' && isApprovedOfficeUser()) ||
+        (configId == 'incentive_rules_v2' && isSuperAdmin());
+
       allow create, update: if
-        (configId == 'medicine_price_list_2026' && canEditMedicine()) || isAdmin();
-      allow delete: if isAdmin();
+        (configId == 'medicine_price_list_2026' && canEditMedicine()) ||
+        (configId == 'incentive_rules_v2' && isSuperAdmin());
+
+      allow delete: if isSuperAdmin();
     }
 
-    // These business collections remain closed until their role-specific data matrix is audited.
+    // HM identity and business records remain closed until UID mapping and
+    // collection-specific role rules are implemented and emulator-tested.
     match /health_mitras/{documentId} {
       allow read, write: if false;
     }
