@@ -28,12 +28,9 @@ const FIREBASE_CONFIG = {
 const FIRESTORE_DATABASE_ID = "ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2";
 
 const firebaseApp = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-let db;
-try {
-  db = getFirestore(firebaseApp, FIRESTORE_DATABASE_ID);
-} catch (_) {
-  db = getFirestore(firebaseApp);
-}
+// Fail closed if the named Android-shared database cannot be opened.
+// Never silently fall back to the default Firestore database.
+const db = getFirestore(firebaseApp, FIRESTORE_DATABASE_ID);
 
 // ============================================================================
 // 2. ROLES, RANKS & PERMISSION HIERARCHY (IDENTICAL TO ANDROID APP)
@@ -487,27 +484,18 @@ function getTabsForCurrentUser() {
   }
   const role = state.currentUser.role;
 
-  // View-only Admins and Delivery Staff must not see billing/member-admin controls.
-  if (state.currentUser.isReadOnlyAdmin || role === "STAFF_JEET") {
-    return [
-      { id: "PRICE_LIST", label: "📋 HM Price List (273)" },
-      { id: "ORDERS", label: "📦 Orders & Dispatch" }
-    ];
-  }
-
-  const billingTabs = [
+  // HM identity mapping and password-field migration are not complete.
+  // Until then, expose only features whose data paths are verified and authorized.
+  const safeTabs = [
     { id: "PRICE_LIST", label: "📋 HM Price List (273)" },
-    { id: "NEW_BILL", label: "🧾 New Challan / Billing" },
-    { id: "ORDERS", label: "📦 Orders & Dispatch" },
-    { id: "HM_PROFILE", label: "🎖️ HM Incentive & Profile" },
-    { id: "TEAM_TREE_VIEW", label: "🌳 Team / Tree View" },
-    { id: "HEALTH_MITRA", label: "🩺 HM Registration & List" }
+    { id: "ORDERS", label: "📦 Billing & Dispatch View" }
   ];
 
   if (state.currentUser.isSuperAdmin) {
-    billingTabs.push({ id: "PAYOUTS", label: "💰 Incentive Config & Payouts" });
+    safeTabs.push({ id: "PAYOUTS", label: "💰 Incentive Config & Payouts" });
   }
-  return billingTabs;
+
+  return safeTabs;
 }
 
 function renderDashboard() {
