@@ -9,6 +9,9 @@ let testEnv;
 
 const staffClaims = { phone_number: "+919000000001" };
 const adminClaims = { phone_number: "+919000000002" };
+const gopalClaims = { phone_number: "+919000000004" };
+const milanClaims = { phone_number: "+919000000005" };
+const deliveryClaims = { phone_number: "+919000000006" };
 
 before(async () => {
   testEnv = await initializeTestEnvironment({
@@ -28,12 +31,27 @@ beforeEach(async () => {
     await setDoc(doc(db, "office_staff_auth/staff-1"), {
       uid: "staff-1", phoneE164: staffClaims.phone_number,
       staffRole: "STAFF_SONALI", officeCategory: "BILLING_STAFF",
-      active: true, displayName: "Test Staff"
+      active: true, displayName: "Test Billing Staff"
     });
     await setDoc(doc(db, "office_staff_auth/admin-1"), {
       uid: "admin-1", phoneE164: adminClaims.phone_number,
       staffRole: "SUPER_ADMIN", officeCategory: "SUPER_ADMIN",
-      active: true, displayName: "Test Admin"
+      active: true, displayName: "Test Super Admin"
+    });
+    await setDoc(doc(db, "office_staff_auth/gopal-1"), {
+      uid: "gopal-1", phoneE164: gopalClaims.phone_number,
+      staffRole: "ADMIN_GOPAL", officeCategory: "BILLING_PRODUCTION_VIEWER",
+      active: true, displayName: "Test Gopal"
+    });
+    await setDoc(doc(db, "office_staff_auth/milan-1"), {
+      uid: "milan-1", phoneE164: milanClaims.phone_number,
+      staffRole: "ADMIN_MILAN", officeCategory: "BILLING_PRODUCTION_VIEWER",
+      active: true, displayName: "Test Milan"
+    });
+    await setDoc(doc(db, "office_staff_auth/jeet-1"), {
+      uid: "jeet-1", phoneE164: deliveryClaims.phone_number,
+      staffRole: "STAFF_JEET", officeCategory: "DELIVERY_STAFF",
+      active: true, displayName: "Test Delivery Staff"
     });
     await setDoc(doc(db, "office_staff_auth/inactive-1"), {
       uid: "inactive-1", phoneE164: "+919000000003",
@@ -51,6 +69,12 @@ beforeEach(async () => {
       action: "STOCK_IN", createdByUid: "staff-1", createdAt: new Date()
     });
     await setDoc(doc(db, "bills/bill-1"), { total: 100 });
+    await setDoc(doc(db, "commission_config/medicine_price_list_2026"), {
+      jsonPayload: "[]", updatedBy: "test", updatedAt: Date.now()
+    });
+    await setDoc(doc(db, "commission_config/incentive_rules_v2"), {
+      jsonPayload: "{}", updatedBy: "test", updatedAt: Date.now()
+    });
   });
 });
 
@@ -59,6 +83,15 @@ function staffDb() {
 }
 function adminDb() {
   return testEnv.authenticatedContext("admin-1", adminClaims).firestore();
+}
+function gopalDb() {
+  return testEnv.authenticatedContext("gopal-1", gopalClaims).firestore();
+}
+function milanDb() {
+  return testEnv.authenticatedContext("milan-1", milanClaims).firestore();
+}
+function jeetDb() {
+  return testEnv.authenticatedContext("jeet-1", deliveryClaims).firestore();
 }
 
 test("approved active staff can read medicine documents and list catalogue", async () => {
@@ -87,11 +120,24 @@ test("inactive office profile cannot read medicines", async () => {
   await assertFails(getDoc(doc(db, "medicines/med-1")));
 });
 
-test("admin can read medicines", async () => {
+test("Super Admin can read medicines", async () => {
   await assertSucceeds(getDoc(doc(adminDb(), "medicines/med-1")));
 });
 
-test("only approved medicine editors and admins can write medicine records", async () => {
+test("Gopal and Milan are read-only for medicines and stock records", async () => {
+  for (const db of [gopalDb(), milanDb()]) {
+    await assertSucceeds(getDoc(doc(db, "medicines/med-1")));
+    await assertSucceeds(getDoc(doc(db, "inventory_logs/log-1")));
+    await assertFails(updateDoc(doc(db, "medicines/med-1"), { stockQuantity: 9, updatedAt: new Date() }));
+    await assertFails(setDoc(doc(db, "inventory_logs/viewer-write"), {
+      medicineId: "med-1", medicineName: "Test Medicine",
+      action: "STOCK_OUT", createdByUid: "gopal-1", createdAt: new Date()
+    }));
+    await assertFails(getDoc(doc(db, "bills/bill-1")));
+  }
+});
+
+test("only approved medicine editors and Super Admin can write medicine records", async () => {
   const medicine = {
     slNo: 2, name: "New Medicine", codeName: "NEW",
     quantityNetContent: "1 bottle", mrpPrice: 120, hmPrice: 95,
@@ -100,6 +146,8 @@ test("only approved medicine editors and admins can write medicine records", asy
   };
   await assertSucceeds(setDoc(doc(staffDb(), "medicines/new-med"), medicine));
   await assertSucceeds(setDoc(doc(adminDb(), "medicines/admin-med"), medicine));
+  await assertFails(setDoc(doc(jeetDb(), "medicines/delivery-blocked"), medicine));
+  await assertFails(setDoc(doc(gopalDb(), "medicines/viewer-blocked"), medicine));
   const ordinaryDb = testEnv.authenticatedContext("unknown-user", {
     phone_number: "+919000000009"
   }).firestore();
@@ -113,6 +161,16 @@ test("staff can read and append inventory logs", async () => {
   await assertSucceeds(setDoc(doc(db, "inventory_logs/log-2"), {
     medicineId: "med-1", medicineName: "Test Medicine",
     action: "STOCK_OUT", createdByUid: "staff-1", createdAt: new Date()
+  }));
+});
+
+test("delivery staff can append stock movement logs but cannot change medicine records", async () => {
+  await assertSucceeds(setDoc(doc(jeetDb(), "inventory_logs/jeet-log"), {
+    medicineId: "med-1", medicineName: "Test Medicine",
+    action: "STOCK_OUT", createdByUid: "jeet-1", createdAt: new Date()
+  }));
+  await assertFails(updateDoc(doc(jeetDb(), "medicines/med-1"), {
+    stockQuantity: 0, updatedAt: new Date()
   }));
 });
 
@@ -150,7 +208,29 @@ test("client cannot create or modify office authorization profiles", async () =>
   }));
 });
 
-test("bills remain denied until their role matrix is implemented", async () => {
-  await assertFails(getDoc(doc(staffDb(), "bills/bill-1")));
-  await assertFails(getDoc(doc(adminDb(), "bills/bill-1")));
+test("billing staff may update medicine price configuration but not incentive settings", async () => {
+  await assertSucceeds(setDoc(doc(staffDb(), "commission_config/medicine_price_list_2026"), {
+    jsonPayload: "[]", updatedBy: "Test Billing Staff", updatedAt: Date.now()
+  }));
+  await assertFails(setDoc(doc(staffDb(), "commission_config/incentive_rules_v2"), {
+    jsonPayload: "{\"rankSelfPctMap\":{}}", updatedBy: "Test Billing Staff", updatedAt: Date.now()
+  }));
+});
+
+test("only Super Admin can read and update incentive configuration", async () => {
+  await assertSucceeds(getDoc(doc(adminDb(), "commission_config/incentive_rules_v2")));
+  await assertSucceeds(setDoc(doc(adminDb(), "commission_config/incentive_rules_v2"), {
+    jsonPayload: "{}", updatedBy: "Test Super Admin", updatedAt: Date.now()
+  }));
+  await assertFails(getDoc(doc(gopalDb(), "commission_config/incentive_rules_v2")));
+  await assertFails(getDoc(doc(staffDb(), "commission_config/incentive_rules_v2")));
+});
+
+test("business records remain denied until their collection-specific matrix is implemented", async () => {
+  for (const db of [staffDb(), adminDb(), gopalDb(), milanDb(), jeetDb()]) {
+    await assertFails(getDoc(doc(db, "health_mitras/HM001")));
+    await assertFails(getDoc(doc(db, "bills/bill-1")));
+    await assertFails(getDoc(doc(db, "returns/return-1")));
+    await assertFails(getDoc(doc(db, "ledger/entry-1")));
+  }
 });
