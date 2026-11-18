@@ -269,6 +269,19 @@ test("view-only admins can read bills but cannot create or modify them", async (
   }
 });
 
+test("billing staff can append validated online payment metadata to bills", async () => {
+  await assertSucceeds(updateDoc(doc(staffDb(), "bills/bill-1"), {
+    notes: "ONLINE PAYMENT | Amount: ₹80 | Date: 18-11-2026 | Time: 11:00",
+    onlinePaymentAmount: "80",
+    onlinePaymentDate: "18-11-2026",
+    onlinePaymentTime: "11:00"
+  }));
+  await assertFails(updateDoc(doc(jeetDb(), "bills/bill-1"), {
+    notes: "tampered", onlinePaymentAmount: "80",
+    onlinePaymentDate: "18-11-2026", onlinePaymentTime: "11:00"
+  }));
+});
+
 test("delivery staff can update only delivery fields on bills", async () => {
   const db = jeetDb();
   await assertSucceeds(getDoc(doc(db, "bills/bill-1")));
