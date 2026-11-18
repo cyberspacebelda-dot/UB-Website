@@ -136,19 +136,83 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // HM identity and business records remain closed until UID mapping and
-    // collection-specific role rules are implemented and emulator-tested.
+    function validBill(data) {
+      return data.billNumber is string && data.billNumber.size() > 0 && data.billNumber.size() <= 50 &&
+        data.hmCode is string && data.hmCode.size() <= 50 &&
+        data.hmName is string && data.hmName.size() <= 200 &&
+        data.hmMobile is string && data.hmMobile.size() <= 30 &&
+        data.hmAddress is string && data.hmAddress.size() <= 500 &&
+        data.gpName is string && data.gpName.size() <= 150 &&
+        data.pincode is string && data.pincode.size() <= 20 &&
+        data.branch is string && data.branch.size() <= 100 &&
+        data.patientName is string && data.patientName.size() <= 200 &&
+        data.patientMobile is string && data.patientMobile.size() <= 30 &&
+        data.billingMode in ['DISPENSARY_CHALLAN', 'WITH_RETAIL_PROFIT'] &&
+        data.paymentMode in ['CASH', 'ONLINE', 'CREDIT'] &&
+        data.items is list && data.items.size() > 0 && data.items.size() <= 100 &&
+        data.subtotal is number && data.subtotal >= 0 &&
+        data.discount is number && data.discount >= 0 &&
+        data.netAmount is number && data.netAmount >= 0 &&
+        data.previousBalance is number &&
+        data.currentBalance is number &&
+        data.isChallanOnly is bool &&
+        data.status in ['PENDING', 'PAID', 'APPROVED', 'DELIVERED'] &&
+        data.verifiedBy is string && data.verifiedBy.size() <= 150 &&
+        data.verifiedAt is number &&
+        data.deliveredBy is string && data.deliveredBy.size() <= 150 &&
+        data.deliveredAt is number &&
+        data.stockDeducted is bool &&
+        data.notes is string && data.notes.size() <= 1000 &&
+        data.createdAt is timestamp && data.createdAt <= request.time &&
+        data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function validBillingVerificationUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'verifiedBy', 'verifiedAt', 'updatedAt']) &&
+        request.resource.data.status in ['PAID', 'APPROVED'] &&
+        request.resource.data.verifiedBy == officeProfile().displayName &&
+        request.resource.data.verifiedAt is number &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.updatedAt <= request.time;
+    }
+
+    function validDeliveryUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'deliveredBy', 'deliveredAt', 'stockDeducted', 'updatedAt']) &&
+        request.resource.data.status == 'DELIVERED' &&
+        request.resource.data.deliveredBy == officeProfile().displayName &&
+        request.resource.data.deliveredAt is number &&
+        request.resource.data.stockDeducted == true &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.updatedAt <= request.time;
+    }
+
+    // HM identity remains closed until UID mapping and password migration are complete.
     match /health_mitras/{documentId} {
       allow read, write: if false;
     }
-    match /bills/{documentId} {
+
+    // Office bill access is role-scoped. No client can delete a bill.
+    match /bills/{billId} {
+      allow get, list: if isApprovedOfficeUser();
+      allow create: if (isSuperAdmin() || isBillingStaff()) &&
+        validBill(request.resource.data);
+      allow update: if isSuperAdmin() ||
+        ((isBillingStaff()) && validBillingVerificationUpdate()) ||
+        (isDeliveryStaff() && validDeliveryUpdate());
+      allow delete: if false;
+    }
+
+    // Returns stay denied until Android's actual return schema and transitions are audited.
+    match /returns/{returnId} {
       allow read, write: if false;
     }
-    match /returns/{documentId} {
-      allow read, write: if false;
-    }
-    match /ledger/{documentId} {
-      allow read, write: if false;
+
+    // Ledger is read-only in the browser. Balance posting must use a trusted workflow.
+    match /ledger/{ledgerId} {
+      allow get, list: if isSuperAdmin() || isBillingStaff();
+      allow create, update, delete: if false;
     }
     match /admins/{documentId} {
       allow read, write: if false;
