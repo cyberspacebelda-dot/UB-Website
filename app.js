@@ -436,6 +436,7 @@ async function applyAuthorizedOfficeUser(user) {
     category: profile.category, displayName: profile.displayName,
     hmCode: "", rankCode: "OFFICE",
     isSuperAdmin: profile.isSuperAdmin,
+    isReadOnlyAdmin: profile.isReadOnlyAdmin,
     canEditMedAndHm: profile.canEditMedAndHm,
     canVerifyBilling: profile.canVerifyBilling,
     canConfirmDelivery: profile.canConfirmDelivery
@@ -491,15 +492,29 @@ function getTabsForCurrentUser() {
       { id: "TEAM_TREE_VIEW", label: "🌳 Team / Tree View" }
     ];
   }
-  return [
+  const role = state.currentUser.role;
+
+  // View-only Admins and Delivery Staff must not see billing/member-admin controls.
+  if (state.currentUser.isReadOnlyAdmin || role === "STAFF_JEET") {
+    return [
+      { id: "PRICE_LIST", label: "📋 HM Price List (273)" },
+      { id: "ORDERS", label: "📦 Orders & Dispatch" }
+    ];
+  }
+
+  const billingTabs = [
     { id: "PRICE_LIST", label: "📋 HM Price List (273)" },
     { id: "NEW_BILL", label: "🧾 New Challan / Billing" },
     { id: "ORDERS", label: "📦 Orders & Dispatch" },
     { id: "HM_PROFILE", label: "🎖️ HM Incentive & Profile" },
     { id: "TEAM_TREE_VIEW", label: "🌳 Team / Tree View" },
-    { id: "HEALTH_MITRA", label: "🩺 HM Registration & List" },
-    { id: "PAYOUTS", label: "💰 Incentive Config & Payouts" }
+    { id: "HEALTH_MITRA", label: "🩺 HM Registration & List" }
   ];
+
+  if (state.currentUser.isSuperAdmin) {
+    billingTabs.push({ id: "PAYOUTS", label: "💰 Incentive Config & Payouts" });
+  }
+  return billingTabs;
 }
 
 function renderDashboard() {
