@@ -188,6 +188,19 @@ service cloud.firestore {
         request.resource.data.updatedAt <= request.time;
     }
 
+    function validOnlinePaymentUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['notes', 'onlinePaymentAmount', 'onlinePaymentDate', 'onlinePaymentTime']) &&
+        request.resource.data.notes is string &&
+        request.resource.data.notes.size() <= 1000 &&
+        request.resource.data.onlinePaymentAmount is string &&
+        request.resource.data.onlinePaymentAmount.size() <= 50 &&
+        request.resource.data.onlinePaymentDate is string &&
+        request.resource.data.onlinePaymentDate.size() <= 50 &&
+        request.resource.data.onlinePaymentTime is string &&
+        request.resource.data.onlinePaymentTime.size() <= 50;
+    }
+
     // HM identity remains closed until UID mapping and password migration are complete.
     match /health_mitras/{documentId} {
       allow read, write: if false;
@@ -199,7 +212,7 @@ service cloud.firestore {
       allow create: if (isSuperAdmin() || isBillingStaff()) &&
         validBill(request.resource.data);
       allow update: if isSuperAdmin() ||
-        ((isBillingStaff()) && validBillingVerificationUpdate()) ||
+        (isBillingStaff() && (validBillingVerificationUpdate() || validOnlinePaymentUpdate())) ||
         (isDeliveryStaff() && validDeliveryUpdate());
       allow delete: if false;
     }
