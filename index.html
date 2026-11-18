@@ -186,31 +186,16 @@
           </div>
           <h2 class="text-xl font-extrabold text-slate-900 mb-1">Health Mitra Portal</h2>
           <p class="text-xs text-slate-500 mb-5">
-            Login with your Health Mitra ID (e.g. <code class="font-bold text-slate-700">HM001</code>) or registered Mobile Number and Password.
+            Sign in with your registered mobile number using Firebase OTP. New Health Mitras can submit a registration request for Super Admin approval.
           </p>
-
-          <div class="space-y-3.5">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">HM Code or Mobile Number</label>
-              <input id="hmLoginIdInput" type="text" placeholder="HM OTP access will be enabled after account linking" disabled
-                     class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-blue-700" />
-            </div>
-
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">HM password login is paused during secure Firebase account linking. Existing HM records are not changed.</div>
-
-            <div id="hmLoginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-2.5"></div>
+          <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+            OTP verification does not automatically activate an account. Access is enabled only after Super Admin approval.
           </div>
         </div>
-
         <div class="mt-6 space-y-2.5">
-          <button onclick="window.ubApp.loginHm()" disabled
-                  class="w-full py-3 rounded-xl ub-blue-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
-            Login as Health Mitra →
-          </button>
-          <button onclick="window.ubApp.openRegisterHmModal()" disabled
-                  class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 transition">
-            + New Health Mitra Registration
-          </button>
+          <a href="./hm-auth.html" class="block text-center w-full py-3 rounded-xl ub-blue-bg hover:opacity-95 text-white font-extrabold text-sm shadow-md transition">
+            Health Mitra Login / Registration →
+          </a>
         </div>
       </div>
     </div>
