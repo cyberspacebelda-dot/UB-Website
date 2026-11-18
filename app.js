@@ -18,17 +18,14 @@ const FIREBASE_CONFIG = {
   projectId: "ub-ayurved",
   storageBucket: "ub-ayurved.firebasestorage.app",
   messagingSenderId: "893264713046",
-  appId: "1:893264713046:android:8964bf3f130a0b90cff2f7"
+  appId: "1:893264713046:web:1bc7da53d88c7c0bcff2f7"
 };
 const FIRESTORE_DATABASE_ID = "ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2";
 
 const firebaseApp = initializeApp(FIREBASE_CONFIG);
-let db;
-try {
-  db = getFirestore(firebaseApp, FIRESTORE_DATABASE_ID);
-} catch (_) {
-  db = getFirestore(firebaseApp);
-}
+// Always target the verified named Firestore database. Never silently fall back
+// to (default), because that would split Android and Website data.
+const db = getFirestore(firebaseApp, FIRESTORE_DATABASE_ID);
 
 // ============================================================================
 // 2. ROLES, RANKS & PERMISSION HIERARCHY (IDENTICAL TO ANDROID APP)
