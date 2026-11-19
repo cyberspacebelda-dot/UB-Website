@@ -376,28 +376,138 @@
   </main>
 
 
-  <!-- PUBLIC PRODUCT GALLERY — poster assets are stored in assets/products/ -->
+  <!-- PUBLIC PRODUCT GALLERY — all 18 poster assets are stored in assets/products/ -->
   <section id="publicProductGallery" class="w-full max-w-7xl mx-auto px-4 pb-12">
     <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
       <div>
         <p class="text-xs font-extrabold tracking-[.22em] text-emerald-700 uppercase">UB Ayurved • Product Range</p>
         <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Our Products <span class="text-emerald-800">| আমাদের পণ্যসমূহ</span></h2>
-        <p class="text-sm text-slate-500 mt-1">Explore our current product posters and packaging highlights.</p>
+        <p class="text-sm text-slate-500 mt-1">Explore all 18 product posters. Tap any poster to view it larger.</p>
+        <p class="text-sm text-slate-500">১৮টি পণ্যের পোস্টার দেখুন। বড় করে দেখতে যেকোনো পোস্টারে চাপ দিন।</p>
       </div>
-      <span class="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">9 Product Designs</span>
+      <span class="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">18 Products • ১৮টি পণ্য</span>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      <article class="ub-product-card"><img src="./assets/products/kabz-rahat-churna.webp" alt="UB Ayurved Kabz Rahat Churna poster" loading="lazy"><div><h3>Kabz Rahat Churna</h3><p>কবজ রহত চূর্ণ</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/kesh-amrit-hair-oil.webp" alt="UB Ayurved Kesh Amrit Hair Oil poster" loading="lazy"><div><h3>Kesh Amrit Hair Oil</h3><p>কেশ অমৃত হেয়ার অয়েল</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/body-boost-tablets.webp" alt="UB Ayurved Body Boost tablets poster" loading="lazy"><div><h3>Body Boost Tablets</h3><p>বডি বুস্ট ট্যাবলেট</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/livo-meta-capsules.webp" alt="UB Ayurved Livo Meta capsules poster" loading="lazy"><div><h3>Livo Meta Capsules</h3><p>লিভো মেটা ক্যাপসুল</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/ortho-relief-tablets.webp" alt="UB Ayurved OrthoRelief tablets poster" loading="lazy"><div><h3>OrthoRelief Tablets</h3><p>অর্থো রিলিফ ট্যাবলেট</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/pilo-guard-capsules.webp" alt="UB Ayurved Pilo Guard capsules poster" loading="lazy"><div><h3>Pilo Guard Capsules</h3><p>পাইলো গার্ড ক্যাপসুল</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/stamina-capsules.webp" alt="UB Ayurved Stamina capsules poster" loading="lazy"><div><h3>Stamina Capsules</h3><p>স্ট্যামিনা ক্যাপসুল</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/dental-care-toothpaste.webp" alt="UB Ayurved Dental Care toothpaste poster" loading="lazy"><div><h3>Dental Care Toothpaste</h3><p>ডেন্টাল কেয়ার টুথপেস্ট</p></div></article>
-      <article class="ub-product-card"><img src="./assets/products/happy-heart-kadha.webp" alt="UB Ayurved Happy Heart Kadha poster" loading="lazy"><div><h3>Happy Heart Kadha</h3><p>হ্যাপি হার্ট কाढ़া</p></div></article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('kabz-rahat-churna','Kabz Rahat Churna')" aria-label="View Kabz Rahat Churna poster">
+          <img src="./assets/products/kabz-rahat-churna.webp" alt="UB Ayurved Kabz Rahat Churna poster" loading="lazy">
+          <div><h3>Kabz Rahat Churna</h3><p>কবজ রহত চূর্ণ</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('kesh-amrit-hair-oil','Kesh Amrit Hair Oil')" aria-label="View Kesh Amrit Hair Oil poster">
+          <img src="./assets/products/kesh-amrit-hair-oil.webp" alt="UB Ayurved Kesh Amrit Hair Oil poster" loading="lazy">
+          <div><h3>Kesh Amrit Hair Oil</h3><p>কেশ অমৃত হেয়ার অয়েল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('body-boost-tablets','Body Boost Tablets')" aria-label="View Body Boost Tablets poster">
+          <img src="./assets/products/body-boost-tablets.webp" alt="UB Ayurved Body Boost Tablets poster" loading="lazy">
+          <div><h3>Body Boost Tablets</h3><p>বডি বুস্ট ট্যাবলেট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('livo-meta-capsules','Livo Meta Capsules')" aria-label="View Livo Meta Capsules poster">
+          <img src="./assets/products/livo-meta-capsules.webp" alt="UB Ayurved Livo Meta Capsules poster" loading="lazy">
+          <div><h3>Livo Meta Capsules</h3><p>লিভো মেটা ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('ortho-relief-tablets','OrthoRelief Tablets')" aria-label="View OrthoRelief Tablets poster">
+          <img src="./assets/products/ortho-relief-tablets.webp" alt="UB Ayurved OrthoRelief Tablets poster" loading="lazy">
+          <div><h3>OrthoRelief Tablets</h3><p>অর্থো রিলিফ ট্যাবলেট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('pilo-guard-capsules','Pilo Guard Capsules')" aria-label="View Pilo Guard Capsules poster">
+          <img src="./assets/products/pilo-guard-capsules.webp" alt="UB Ayurved Pilo Guard Capsules poster" loading="lazy">
+          <div><h3>Pilo Guard Capsules</h3><p>পাইলো গার্ড ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('stamina-capsules','Stamina Capsules')" aria-label="View Stamina Capsules poster">
+          <img src="./assets/products/stamina-capsules.webp" alt="UB Ayurved Stamina Capsules poster" loading="lazy">
+          <div><h3>Stamina Capsules</h3><p>স্ট্যামিনা ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('dental-care-toothpaste','Dental Care Toothpaste')" aria-label="View Dental Care Toothpaste poster">
+          <img src="./assets/products/dental-care-toothpaste.webp" alt="UB Ayurved Dental Care Toothpaste poster" loading="lazy">
+          <div><h3>Dental Care Toothpaste</h3><p>ডেন্টাল কেয়ার টুথপেস্ট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('happy-heart-kadha','Happy Heart Kadha')" aria-label="View Happy Heart Kadha poster">
+          <img src="./assets/products/happy-heart-kadha.webp" alt="UB Ayurved Happy Heart Kadha poster" loading="lazy">
+          <div><h3>Happy Heart Kadha</h3><p>হ্যাপি হার্ট কाढ़া</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('amrit-ras','Amrit Ras')" aria-label="View Amrit Ras poster">
+          <img src="./assets/products/amrit-ras.webp" alt="UB Ayurved Amrit Ras poster" loading="lazy">
+          <div><h3>Amrit Ras</h3><p>আমৃত রস</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('femenergy-boost','Femenergy Boost')" aria-label="View Femenergy Boost poster">
+          <img src="./assets/products/femenergy-boost.webp" alt="UB Ayurved Femenergy Boost poster" loading="lazy">
+          <div><h3>Femenergy Boost</h3><p>ফেমএনার্জি বুস্ট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('oja-tail','OJA Tail')" aria-label="View OJA Tail poster">
+          <img src="./assets/products/oja-tail.webp" alt="UB Ayurved OJA Tail poster" loading="lazy">
+          <div><h3>OJA Tail</h3><p>ওজা তৈল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('smriti-plus','Smriti Plus')" aria-label="View Smriti Plus poster">
+          <img src="./assets/products/smriti-plus.webp" alt="UB Ayurved Smriti Plus poster" loading="lazy">
+          <div><h3>Smriti Plus</h3><p>স্মৃতি প্লাস</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('allergy-care','Allergy Care')" aria-label="View Allergy Care poster">
+          <img src="./assets/products/allergy-care.webp" alt="UB Ayurved Allergy Care poster" loading="lazy">
+          <div><h3>Allergy Care</h3><p>অ্যালার্জি কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('bal-amrut','Bal Amrut')" aria-label="View Bal Amrut poster">
+          <img src="./assets/products/bal-amrut.webp" alt="UB Ayurved Bal Amrut poster" loading="lazy">
+          <div><h3>Bal Amrut</h3><p>বাল অমৃত</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('hair-care','Hair Care')" aria-label="View Hair Care poster">
+          <img src="./assets/products/hair-care.webp" alt="UB Ayurved Hair Care poster" loading="lazy">
+          <div><h3>Hair Care</h3><p>হেয়ার কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('hair-oil','Hair Oil')" aria-label="View Hair Oil poster">
+          <img src="./assets/products/hair-oil.webp" alt="UB Ayurved Hair Oil poster" loading="lazy">
+          <div><h3>Hair Oil</h3><p>হেয়ার অয়েল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('neuro-care','Neuro Care')" aria-label="View Neuro Care poster">
+          <img src="./assets/products/neuro-care.webp" alt="UB Ayurved Neuro Care poster" loading="lazy">
+          <div><h3>Neuro Care</h3><p>নিউরো কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
     </div>
   </section>
+
+  <div id="ubProductPosterModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/90 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="ubPosterTitle" onclick="if(event.target===this) closeUbProductPoster()">
+    <div class="relative flex max-h-full w-full max-w-4xl flex-col items-center">
+      <div class="mb-3 flex w-full items-center justify-between gap-3 text-white">
+        <h3 id="ubPosterTitle" class="text-base sm:text-lg font-extrabold">Product Poster</h3>
+        <button type="button" onclick="closeUbProductPoster()" class="rounded-full bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25">Close ✕</button>
+      </div>
+      <img id="ubPosterImage" src="" alt="" class="max-h-[82vh] max-w-full rounded-xl bg-white object-contain shadow-2xl">
+    </div>
+  </div>
 
   <!-- DASHBOARD VIEW -->
   <div id="dashboardView" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 gap-3">
@@ -429,5 +539,31 @@
 
   <script src="./price-list-2026.js"></script>
   <script type="module" src="./app.js"></script>
+
+<script>
+  function openUbProductPoster(slug, name) {
+    const modal = document.getElementById('ubProductPosterModal');
+    const image = document.getElementById('ubPosterImage');
+    const title = document.getElementById('ubPosterTitle');
+    if (!modal || !image || !title) return;
+    title.textContent = name + ' — Product Poster';
+    image.src = './assets/products/' + slug + '.webp';
+    image.alt = 'UB Ayurved ' + name + ' product poster';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeUbProductPoster() {
+    const modal = document.getElementById('ubProductPosterModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeUbProductPoster();
+  });
+</script>
+
 </body>
 </html>
