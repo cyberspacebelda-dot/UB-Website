@@ -201,28 +201,28 @@
     #activeTabContent tbody tr:nth-child(even) { background:#fafcf9; }
     #activeTabContent tbody tr:hover { background:#eef7f0; }
     /* Billing workspace */
-    #activeTabContent .lg\\:col-span-7,
-    #activeTabContent .lg\\:col-span-5 {
+    #activeTabContent [class~="lg:col-span-7"],
+    #activeTabContent [class~="lg:col-span-5"] {
       border:1px solid #e0e9e1; border-radius:20px;
       box-shadow:0 12px 32px rgba(22,68,42,.055);
     }
     #activeTabContent .max-h-80,
     #activeTabContent .max-h-64 { scrollbar-width:thin; scrollbar-color:#c3d5c7 transparent; }
     /* Orders & dispatch */
-    #activeTabContent .hover\\:border-emerald-600\\/50:hover {
+    #activeTabContent [class*="hover:border-emerald-600/50"]:hover {
       border-color:#8bb99a; box-shadow:0 8px 22px rgba(20,82,47,.07);
     }
     /* HM profile cards and payout metrics */
     #activeTabContent .grid.grid-cols-2 > div,
-    #activeTabContent .grid.sm\\:grid-cols-4 > div {
+    #activeTabContent .grid[class~="sm:grid-cols-4"] > div {
       border-radius:14px; min-width:0;
     }
     @media (min-width:768px) {
-      #activeTabContent .lg\\:col-span-7 { position:relative; }
-      #activeTabContent .lg\\:col-span-5 { position:sticky; top:108px; align-self:start; }
+      #activeTabContent [class~="lg:col-span-7"] { position:relative; }
+      #activeTabContent [class~="lg:col-span-5"] { position:sticky; top:108px; align-self:start; }
     }
     @media (max-width:767px) {
-      #activeTabContent .lg\\:col-span-5 { position:static; }
+      #activeTabContent [class~="lg:col-span-5"] { position:static; }
       #activeTabContent .grid.grid-cols-2 > div { padding:11px; }
       #activeTabContent button { min-height:40px; }
       #activeTabContent .flex.flex-wrap.items-center.justify-between { align-items:flex-start; }
