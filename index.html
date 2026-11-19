@@ -228,6 +228,15 @@
       #activeTabContent .flex.flex-wrap.items-center.justify-between { align-items:flex-start; }
     }
 
+
+    /* Public product gallery */
+    #publicProductGallery .ub-product-card { overflow:hidden; border:1px solid #dce9df; border-radius:18px; background:#fff; box-shadow:0 8px 24px rgba(17,65,34,.07); transition:transform .18s ease,box-shadow .18s ease; }
+    #publicProductGallery .ub-product-card:hover { transform:translateY(-3px); box-shadow:0 14px 30px rgba(17,65,34,.13); }
+    #publicProductGallery .ub-product-card img { display:block; width:100%; aspect-ratio:3/4; object-fit:contain; background:linear-gradient(145deg,#f5fbf4,#fff); }
+    #publicProductGallery .ub-product-card div { padding:12px 13px 14px; border-top:1px solid #edf3ee; }
+    #publicProductGallery .ub-product-card h3 { color:#123f24; font-size:13px; line-height:1.35; font-weight:900; }
+    #publicProductGallery .ub-product-card p { color:#718078; font-size:11px; margin-top:3px; }
+    @media(max-width:420px) { #publicProductGallery .ub-product-card div { padding:9px; } #publicProductGallery .ub-product-card h3 { font-size:11px; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -365,6 +374,30 @@
       </div>
     </div>
   </main>
+
+
+  <!-- PUBLIC PRODUCT GALLERY — poster assets are stored in assets/products/ -->
+  <section id="publicProductGallery" class="w-full max-w-7xl mx-auto px-4 pb-12">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+      <div>
+        <p class="text-xs font-extrabold tracking-[.22em] text-emerald-700 uppercase">UB Ayurved • Product Range</p>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Our Products <span class="text-emerald-800">| আমাদের পণ্যসমূহ</span></h2>
+        <p class="text-sm text-slate-500 mt-1">Explore our current product posters and packaging highlights.</p>
+      </div>
+      <span class="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">9 Product Designs</span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <article class="ub-product-card"><img src="./assets/products/kabz-rahat-churna.png" alt="UB Ayurved Kabz Rahat Churna poster" loading="lazy"><div><h3>Kabz Rahat Churna</h3><p>কবজ রহত চূর্ণ</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/kesh-amrit-hair-oil.png" alt="UB Ayurved Kesh Amrit Hair Oil poster" loading="lazy"><div><h3>Kesh Amrit Hair Oil</h3><p>কেশ অমৃত হেয়ার অয়েল</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/body-boost-tablets.png" alt="UB Ayurved Body Boost tablets poster" loading="lazy"><div><h3>Body Boost Tablets</h3><p>বডি বুস্ট ট্যাবলেট</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/livo-meta-capsules.png" alt="UB Ayurved Livo Meta capsules poster" loading="lazy"><div><h3>Livo Meta Capsules</h3><p>লিভো মেটা ক্যাপসুল</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/ortho-relief-tablets.png" alt="UB Ayurved OrthoRelief tablets poster" loading="lazy"><div><h3>OrthoRelief Tablets</h3><p>অর্থো রিলিফ ট্যাবলেট</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/pilo-guard-capsules.png" alt="UB Ayurved Pilo Guard capsules poster" loading="lazy"><div><h3>Pilo Guard Capsules</h3><p>পাইলো গার্ড ক্যাপসুল</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/stamina-capsules.png" alt="UB Ayurved Stamina capsules poster" loading="lazy"><div><h3>Stamina Capsules</h3><p>স্ট্যামিনা ক্যাপসুল</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/dental-care-toothpaste.png" alt="UB Ayurved Dental Care toothpaste poster" loading="lazy"><div><h3>Dental Care Toothpaste</h3><p>ডেন্টাল কেয়ার টুথপেস্ট</p></div></article>
+      <article class="ub-product-card"><img src="./assets/products/happy-heart-kadha.png" alt="UB Ayurved Happy Heart Kadha poster" loading="lazy"><div><h3>Happy Heart Kadha</h3><p>হ্যাপি হার্ট কाढ़া</p></div></article>
+    </div>
+  </section>
 
   <!-- DASHBOARD VIEW -->
   <div id="dashboardView" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 gap-3">
