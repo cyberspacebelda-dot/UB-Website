@@ -661,6 +661,15 @@ function renderTabs() {
   if (!tabs.some(t => t.id === state.activeTab)) {
     state.activeTab = tabs[0]?.id || "PRICE_LIST";
   }
+  const tabBn = {
+    PRICE_LIST: "ওষুধের মূল্য তালিকা",
+    NEW_BILL: "নতুন বিল / চালান",
+    ORDERS: "অর্ডার ও ডেলিভারি",
+    HM_PROFILE: "প্রোফাইল ও বিবরণ",
+    TEAM_TREE_VIEW: "টিম / ট্রি ভিউ",
+    HEALTH_MITRA: "হেলথ মিত্র তালিকা",
+    PAYOUTS: "ইনসেনটিভ ও পেআউট"
+  };
   nav.innerHTML = tabs.map(t => {
     const active = t.id === state.activeTab;
     return `
@@ -670,7 +679,8 @@ function renderTabs() {
                   ? 'ub-green-bg text-white shadow-xs'
                   : 'text-slate-700 hover:bg-slate-100'
               }">
-        ${t.label}
+        <span class="ub-tab-label">${t.label}</span>
+        <span class="ub-tab-bn ub-bn">${tabBn[t.id] || ""}</span>
       </button>
     `;
   }).join("");
