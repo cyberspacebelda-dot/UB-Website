@@ -996,7 +996,17 @@ function renderNewBillTab(container) {
 
           <!-- Payment Mode -->
           <div class="pt-2 border-t border-slate-200 space-y-2.5">
-            <label class="block text-xs font-bold text-slate-700">Payment Mode</label>
+            ${state.billMode === "PATIENT" ? `
+              <div class="space-y-2">
+                <div class="flex items-center justify-between"><label class="block text-xs font-bold text-slate-700">PAYMENT RECEIPT</label><span class="text-[10px] font-extrabold text-emerald-700">Patient Invoice</span></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  ${["CASH","UPI / ONLINE","CARD","OTHER"].map(pm => `<button onclick="window.ubApp.setBillPaymentMode('${pm}')" class="py-2 rounded-lg text-[11px] font-extrabold border ${state.billPaymentMode===pm?'bg-emerald-700 text-white border-emerald-800':'bg-slate-50 text-slate-700 border-slate-300'}">${pm}</button>`).join("")}
+                </div>
+                <div><label class="block text-[10px] font-bold text-slate-600">Amount Received (₹)</label><input type="number" min="0" step="0.01" value="${escapeAttr(state.billReceivedAmount)}" oninput="window.ubApp.setPatientReceivedAmount(this.value)" placeholder="Enter amount received" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold" /></div>
+                <div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-slate-50 p-2">Invoice Total: <b>₹${totalHmAmount.toFixed(2)}</b></div><div class="rounded-lg bg-amber-50 p-2">Balance / Due: <b>₹${Math.max(0,totalHmAmount-Number(state.billReceivedAmount||0)).toFixed(2)}</b></div></div>
+              </div>
+            ` : `
+              <label class="block text-xs font-bold text-slate-700">Payment Mode</label>
             <div class="grid grid-cols-3 gap-2">
               ${["CASH", "ONLINE", "CREDIT"].map(pm => `
                 <button onclick="window.ubApp.setBillPaymentMode('${pm}')"
@@ -1035,6 +1045,7 @@ function renderNewBillTab(container) {
                 </div>
               </div>
             ` : ""}
+            `}
           </div>
         </div>
 
@@ -1045,12 +1056,12 @@ function renderNewBillTab(container) {
             <span>₹${totalMrpAmount.toFixed(0)}</span>
           </div>
           <div class="flex justify-between text-sm font-black ub-green-text">
-            <span>Total HM Challan Amount (${targetRank}):</span>
-            <span>₹${totalHmAmount.toFixed(0)}</span>
+            <span>${state.billMode === "PATIENT" ? "Patient Invoice Total:" : "Selected Price Total:"}</span>
+            <span>₹${totalHmAmount.toFixed(2)}</span>
           </div>
           <button onclick="window.ubApp.submitNewChallan()"
                   class="w-full py-3 rounded-xl ub-green-bg hover:opacity-95 text-white font-extrabold text-xs shadow-md transition">
-            ✓ Generate Stock Transfer Challan &amp; Sync to Cloud
+            ✓ ${state.billMode === "PATIENT" ? "Generate Patient Billing Receipt" : "Generate Stock Delivery Challan"} &amp; Sync to Cloud
           </button>
         </div>
       </div>
