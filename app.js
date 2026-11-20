@@ -2268,6 +2268,55 @@ function downloadChallanPdf(billId) {
   const { jsPDF } = window.jspdf;
   const docPdf = new jsPDF({ unit: "pt", format: "a4" });
 
+  if (bill.billingMode === "PATIENT") {
+    const d = new Date(bill.createdAtMs || Date.now());
+    const dStr = d.toLocaleDateString("en-GB");
+    const total = Number(bill.netAmount || bill.subtotal || 0);
+    const received = Number(bill.amountReceived || 0);
+    const due = Math.max(0, total - received);
+    docPdf.setFont("helvetica", "bold"); docPdf.setFontSize(16);
+    docPdf.text("UB AYURVED DRUGS & PHARMACY", 297.5, 48, { align: "center" });
+    docPdf.setFont("helvetica", "normal"); docPdf.setFontSize(9);
+    docPdf.text("Belda, Paschim Medinipur, West Bengal - 721424 | GSTIN: 19AOFPJ5320P1ZL", 297.5, 64, { align: "center" });
+    docPdf.text("www.ubayurved.co.in | ayurvedub@gmail.com | 9382292173", 297.5, 77, { align: "center" });
+    docPdf.setFillColor(128, 24, 45); docPdf.rect(40, 91, 515, 25, "F");
+    docPdf.setTextColor(255,255,255); docPdf.setFont("helvetica","bold"); docPdf.setFontSize(12);
+    docPdf.text("PATIENT BILLING RECEIPT", 297.5, 108, { align:"center" });
+    docPdf.setTextColor(0,0,0); docPdf.setFontSize(9.5);
+    docPdf.text(`Bill / Receipt ID: ${bill.billNumber}`, 48, 137);
+    docPdf.text(`Date: ${dStr}`, 430, 137);
+    docPdf.setDrawColor(120); docPdf.rect(40, 150, 515, 86);
+    docPdf.setFont("helvetica","bold"); docPdf.text("BILL TO: UB AYURVED DRUGS & PHARMACY", 50, 166);
+    docPdf.text("PATIENT DETAILS", 310, 166);
+    docPdf.setFont("helvetica","normal");
+    docPdf.text(`Patient Name: ${String(bill.patientName || "")}`, 310, 182);
+    docPdf.text(`Phone: ${String(bill.patientMobile || "")}`, 310, 197);
+    docPdf.text(`Doctor / Rx Ref.: ${String(bill.patientDoctor || "")}`, 310, 212);
+    docPdf.text(`Address: ${String(bill.patientAddress || "")}`, 50, 197, { maxWidth: 245 });
+    docPdf.text("Patient Billing (Incl. All Taxes)", 50, 218);
+    const rows = (bill.items || []).map((it, i) => [
+      String(i + 1), String(it.medicineName || "").slice(0, 42),
+      String(it.quantity), Number(it.unitPrice || 0).toFixed(2),
+      (Number(it.unitPrice || 0) * Number(it.quantity || 1)).toFixed(2)
+    ]);
+    docPdf.autoTable({ startY: 250, head:[["Sl.","Medicine Code / Name","Qty.","Rate (₹)","Value (₹)"]], body:rows,
+      theme:"grid", styles:{font:"helvetica",fontSize:8,cellPadding:5}, headStyles:{fillColor:[18,84,48]},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:245},2:{cellWidth:48},3:{cellWidth:82},4:{cellWidth:82}} });
+    let y = (docPdf.lastAutoTable?.finalY || 270) + 22;
+    docPdf.setFont("helvetica","bold"); docPdf.setFontSize(10);
+    docPdf.text(`Invoice Total: Rs. ${total.toFixed(2)}`, 390, y);
+    y += 18; docPdf.text(`Amount Received: Rs. ${received.toFixed(2)}`, 390, y);
+    y += 18; docPdf.text(`Balance / Due: Rs. ${due.toFixed(2)}`, 390, y);
+    y += 28; docPdf.setFont("helvetica","normal"); docPdf.setFontSize(9);
+    docPdf.text(`Payment Mode: ${String(bill.paymentMode || "CASH")}`, 48, y);
+    docPdf.text(due <= 0 ? "Payment Status: FULL PAID" : "Payment Status: PARTIAL / DUE", 310, y);
+    y += 38; docPdf.setFontSize(8);
+    docPdf.text("Thank you for choosing UB Ayurved.", 297.5, y, {align:"center"});
+    docPdf.text("Stock Owner: UB Ayurved | Digital Billing Record Maintained", 297.5, y + 14, {align:"center"});
+    const fileName = buildInvoiceFileName(bill).replace(/\.pdf$/i, "_PATIENT_RECEIPT.pdf");
+    docPdf.save(fileName); showToast(`Downloaded ${fileName}`); return;
+  }
+
   docPdf.setFont("helvetica", "bold");
   docPdf.setFontSize(13.5);
   docPdf.text("UB AYURVED DRUGS & PHARMACY", 297.5, 55, { align: "center" });
