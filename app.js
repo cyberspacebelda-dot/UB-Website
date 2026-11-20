@@ -305,6 +305,10 @@ function initFirestoreListeners() {
         branch: data.branch || "Belda HQ",
         patientName: data.patientName || "",
         patientMobile: data.patientMobile || "",
+        patientDoctor: data.patientDoctor || "",
+        patientAddress: data.patientAddress || "",
+        amountReceived: Number(data.amountReceived || 0),
+        balanceDue: Number(data.balanceDue || 0),
         billingMode: data.billingMode || "DISPENSARY_CHALLAN",
         paymentMode: data.paymentMode || "CASH",
         items: Array.isArray(data.items) ? data.items : [],
@@ -2201,7 +2205,7 @@ function openChallanModal(billId) {
     `;
   }).join("");
 
-  openModal(`Stock Transfer Challan — ${b.billNumber}`, `
+  openModal(`${b.billingMode === "PATIENT" ? "Patient Billing Receipt" : "Stock Transfer Challan"} — ${b.billNumber}`, `
     <div class="border-2 border-slate-900 p-4 rounded-lg bg-white text-slate-900 space-y-2 text-xs">
       <div class="text-center space-y-0.5">
         <div class="text-sm font-black">UB AYURVED DRUGS &amp; PHARMACY</div>
