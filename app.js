@@ -893,36 +893,37 @@ function renderNewBillTab(container) {
         <h3 class="text-base font-extrabold ub-green-text">1. Select Health Mitra &amp; Medicines</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Health Mitra Account</label>
-            ${isHm ? `
-              <div class="rounded-xl bg-slate-100 border border-slate-300 px-3 py-2 text-xs font-extrabold text-slate-900">
-                ${escapeHtml(state.currentUser.displayName)} (${escapeHtml(state.currentUser.hmCode)}) • [${escapeHtml(targetRank)}]
-              </div>
-            ` : `
-              <select onchange="window.ubApp.selectBillHm(this.value)"
-                      class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold">
-                <option value="">-- Select Registered Health Mitra --</option>
-                ${state.healthMitras.map(h => `
-                  <option value="${escapeAttr(h.hmCode)}" ${String(h.hmCode).toUpperCase() === String(state.billSelectedHmCode).toUpperCase() ? 'selected' : ''}>
-                    ${escapeHtml(h.name)} (${escapeHtml(h.hmCode)}) — [${escapeHtml(normalizeRankCode(h.rankCode))}]
-                  </option>
-                `).join("")}
-              </select>
-            `}
-          </div>
+          ${state.billMode === "PATIENT" ? `
+            <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><label class="block text-xs font-bold text-slate-700 mb-1">Patient Name *</label><input required value="${escapeAttr(state.billPatientName)}" oninput="window.ubApp.setPatientField('name',this.value)" placeholder="Patient full name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
+              <div><label class="block text-xs font-bold text-slate-700 mb-1">Phone No.</label><input value="${escapeAttr(state.billPatientMobile)}" oninput="window.ubApp.setPatientField('mobile',this.value)" placeholder="Mobile number" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
+              <div><label class="block text-xs font-bold text-slate-700 mb-1">Doctor / Rx Ref.</label><input value="${escapeAttr(state.billPatientDoctor)}" oninput="window.ubApp.setPatientField('doctor',this.value)" placeholder="Prescription reference" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
+              <div><label class="block text-xs font-bold text-slate-700 mb-1">Address</label><input value="${escapeAttr(state.billPatientAddress)}" oninput="window.ubApp.setPatientField('address',this.value)" placeholder="Patient address" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
+            </div>
+          ` : `
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Health Mitra Account</label>
+              ${isHm ? `
+                <div class="rounded-xl bg-slate-100 border border-slate-300 px-3 py-2 text-xs font-extrabold text-slate-900">${escapeHtml(state.currentUser.displayName)} (${escapeHtml(state.currentUser.hmCode)}) • [${escapeHtml(targetRank)}]</div>
+              ` : `
+                <select onchange="window.ubApp.selectBillHm(this.value)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold">
+                  <option value="">-- Select Registered Health Mitra --</option>
+                  ${state.healthMitras.map(h => `<option value="${escapeAttr(h.hmCode)}" ${String(h.hmCode).toUpperCase() === String(state.billSelectedHmCode).toUpperCase() ? 'selected' : ''}>${escapeHtml(h.name)} (${escapeHtml(h.hmCode)}) — [${escapeHtml(normalizeRankCode(h.rankCode))}]</option>`).join("")}
+                </select>
+              `}
+            </div>
+          `}
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Billing Rate Mode</label>
-            <select onchange="window.ubApp.selectBillMode(this.value)"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold">
-              <option value="DISPENSARY_CHALLAN" ${state.billMode === 'DISPENSARY_CHALLAN' ? 'selected' : ''}>
-                Dispensary Transfer (${targetRank} Price Tier)
-              </option>
-              <option value="WITH_RETAIL_PROFIT" ${state.billMode === 'WITH_RETAIL_PROFIT' ? 'selected' : ''}>
-                Patient Price Mode
-              </option>
-            </select>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">BILLING MODE</label>
+            <div class="flex flex-wrap gap-1.5">
+              ${[
+                ["HM_PR","PR (HM.PR.)"],["HM1","HM 1"],["HM2","HM 2"],["HM3","HM 3"],["PATIENT","PATIENT"]
+              ].map(([value,label]) => `
+                <button type="button" onclick="window.ubApp.selectBillMode('${value}')"
+                  class="px-3 py-2 rounded-lg text-xs font-extrabold border ${state.billMode===value ? 'bg-rose-700 text-white border-rose-800' : 'bg-slate-100 text-slate-700 border-slate-300'}">${label}</button>
+              `).join("")}
+            </div>
           </div>
         </div>
 
@@ -2533,6 +2534,17 @@ window.ubApp = {
   },
   selectBillMode(val) {
     state.billMode = val;
+    state.billItems = [];
+    renderActiveTabBody();
+  },
+  setPatientField(field, val) {
+    if (field === "name") state.billPatientName = val;
+    if (field === "mobile") state.billPatientMobile = val;
+    if (field === "doctor") state.billPatientDoctor = val;
+    if (field === "address") state.billPatientAddress = val;
+  },
+  setPatientReceivedAmount(val) {
+    state.billReceivedAmount = val;
     renderActiveTabBody();
   },
   updateBillMedSearch(val) {
