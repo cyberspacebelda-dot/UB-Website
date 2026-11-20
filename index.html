@@ -261,7 +261,10 @@
       </div>
       <div id="ubCartItems" class="mt-3 space-y-2"><p class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">Your cart is empty. Add products to see the summary.</p></div>
       <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span class="text-sm font-bold text-slate-700">Total MRP</span><strong id="ubCartTotalMrp" class="text-xl font-black text-emerald-800">₹0</strong></div>
-      <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Indicative MRP summary only. Final pricing, availability and order confirmation must be checked with the office.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button id="ubPrintQuotationBtn" type="button" onclick="printUbPublicQuotation()" disabled class="rounded-xl bg-emerald-800 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-40">🖨️ Print / Save Quotation</button>
+      </div>
+      <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Indicative MRP quotation only. Final pricing, availability and order confirmation must be checked with the office. This is not an order confirmation or tax invoice.</p>
     </section>
     <div id="ubProductCategoryFilters" class="flex flex-wrap gap-2 mb-4" aria-label="Filter products by category"></div>
     <div id="ubProductGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -567,6 +570,8 @@
 
   addUbPublicProductPriceDetails();
   renderUbProductCategoryFilters();
+  initUbPublicCartButtons();
+  renderUbPublicCart();
 
   function getUbPublicPriceRow(productName) {
     const list = window.FINAL_PRICE_LIST_2026 || [];
@@ -639,6 +644,25 @@
     });
     count.textContent = units + ' item' + (units === 1 ? '' : 's') + ' selected';
     totalNode.textContent = ubCurrency(total);
+    const quoteButton = document.getElementById('ubPrintQuotationBtn');
+    if (quoteButton) quoteButton.disabled = ubPublicCart.size === 0;
+  }
+
+  function printUbPublicQuotation() {
+    if (!ubPublicCart.size) return;
+    const rows = Array.from(ubPublicCart.entries());
+    const total = rows.reduce((sum, entry) => sum + entry[1].mrp * entry[1].quantity, 0);
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const dateText = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'});
+    const tableRows = rows.map(([name, item], index) => '<tr><td>' + (index + 1) + '</td><td>' + escapeHtml(name) + '</td><td class="num">' + item.quantity + '</td><td class="num">' + ubCurrency(item.mrp) + '</td><td class="num">' + ubCurrency(item.mrp * item.quantity) + '</td></tr>').join('');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow pop-ups for this website to print or save the quotation.');
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UB Ayurved - MRP Quotation</title><style>body{font-family:Arial,sans-serif;color:#17211a;margin:32px}header{border-bottom:3px solid #125430;padding-bottom:14px}h1{color:#125430;margin:0;font-size:22px}header p{margin:5px 0;color:#53645a;font-size:12px}.meta{margin:22px 0;font-size:13px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #d7e2d9;padding:10px;text-align:left}th{background:#eaf4ec;color:#125430}.num{text-align:right}.total{margin:18px 0 0 auto;max-width:320px;display:flex;justify-content:space-between;border-top:2px solid #125430;padding:12px 0;font-size:18px;font-weight:bold}.note{margin-top:28px;padding:12px;background:#f4f7f4;font-size:11px;line-height:1.5;color:#526056}.actions{margin:20px 0}.actions button{background:#125430;color:#fff;border:0;padding:10px 16px;border-radius:7px;font-weight:bold;cursor:pointer}@media print{body{margin:14mm}.actions{display:none}}</style></head><body><header><h1>UB AYURVED DRUGS &amp; PHARMACY</h1><p>Belda, Paschim Medinipur (721424), West Bengal</p><p><strong>PRODUCT MRP QUOTATION</strong></p></header><div class="meta"><strong>Date:</strong> ' + escapeHtml(dateText) + '<br><strong>Quotation Type:</strong> Indicative MRP Summary</div><table><thead><tr><th>Sl. No.</th><th>Product Name</th><th class="num">Qty</th><th class="num">Unit MRP</th><th class="num">Amount</th></tr></thead><tbody>' + tableRows + '</tbody></table><div class="total"><span>Total MRP</span><span>' + ubCurrency(total) + '</span></div><div class="note">This document is an indicative product MRP quotation only. It is not a tax invoice, order confirmation, or payment receipt. Product availability and final pricing must be confirmed with UB Ayurved office. No Health Mitra tier or confidential pricing is included.</div><div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div><script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>');
+    printWindow.document.close();
   }
 
   function addUbProductToCart(name) {
