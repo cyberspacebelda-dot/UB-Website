@@ -1006,7 +1006,7 @@ function renderNewBillTab(container) {
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   ${["CASH","UPI / ONLINE","CARD","OTHER"].map(pm => `<button onclick="window.ubApp.setBillPaymentMode('${pm}')" class="py-2 rounded-lg text-[11px] font-extrabold border ${state.billPaymentMode===pm?'bg-emerald-700 text-white border-emerald-800':'bg-slate-50 text-slate-700 border-slate-300'}">${pm}</button>`).join("")}
                 </div>
-                <div><label class="block text-[10px] font-bold text-slate-600">Amount Received (₹)</label><input type="number" min="0" step="0.01" value="${escapeAttr(state.billReceivedAmount)}" oninput="window.ubApp.setPatientReceivedAmount(this.value)" placeholder="Enter amount received" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold" /></div>
+                <div><label class="block text-[10px] font-bold text-slate-600">Amount Received (₹)</label><input type="number" min="0" step="0.01" value="${escapeAttr(state.billReceivedAmount)}" onchange="window.ubApp.setPatientReceivedAmount(this.value)" placeholder="Enter amount received" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold" /></div>
                 <div class="grid grid-cols-2 gap-2 text-xs"><div class="rounded-lg bg-slate-50 p-2">Invoice Total: <b>₹${totalHmAmount.toFixed(2)}</b></div><div class="rounded-lg bg-amber-50 p-2">Balance / Due: <b>₹${Math.max(0,totalHmAmount-Number(state.billReceivedAmount||0)).toFixed(2)}</b></div></div>
               </div>
             ` : `
