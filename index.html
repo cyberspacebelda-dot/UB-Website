@@ -254,7 +254,7 @@
         <option value="price-desc">MRP: High to Low</option>
       </select>
     </div>
-    <section id="ubPublicCart" class="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm" aria-label="Shopping cart">
+    <section id="ubPublicCart" class="hidden mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm" aria-label="Shopping cart">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div><h3 class="text-base font-extrabold text-slate-900">🛒 My Cart</h3><p id="ubCartItemCount" class="mt-1 text-xs text-slate-500" aria-live="polite">0 items selected</p></div>
         <button type="button" onclick="clearUbPublicCart()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Clear Cart</button>
@@ -570,6 +570,16 @@
   initUbPublicCartButtons();
   renderUbPublicCart();
 
+  // Cart and Add to Cart are available only after a successful portal login.
+  window.setUbPublicCartAccess = function(isLoggedIn) {
+    const cart = document.getElementById('ubPublicCart');
+    if (cart) cart.classList.toggle('hidden', !isLoggedIn);
+    document.querySelectorAll('#ubProductGrid .ub-add-cart').forEach(button => {
+      button.classList.toggle('hidden', !isLoggedIn);
+    });
+    if (!isLoggedIn) clearUbPublicCart();
+  };
+
   function getUbPublicPriceRow(productName) {
     const list = window.FINAL_PRICE_LIST_2026 || [];
     const byName = new Map(list.map(row => [String(row[1] || '').trim().toUpperCase(), row]));
@@ -644,10 +654,18 @@
   }
 
   function addUbProductToCart(name) {
+    if (!window.setUbPublicCartAccess || document.getElementById('ubPublicCart')?.classList.contains('hidden')) {
+      alert('Please log in first to use the cart.');
+      return;
+    }
     const priceRow = getUbPublicPriceRow(name);
-    if (!priceRow) return;
+    const mrp = priceRow ? Number(priceRow[3]) : NaN;
+    if (!Number.isFinite(mrp) || mrp <= 0) {
+      alert('MRP not found for ' + name + '. Please confirm the product price list.');
+      return;
+    }
     const existing = ubPublicCart.get(name);
-    ubPublicCart.set(name, {mrp:Number(priceRow[3]), quantity:existing ? existing.quantity + 1 : 1});
+    ubPublicCart.set(name, {mrp, quantity:existing ? existing.quantity + 1 : 1});
     renderUbPublicCart();
   }
 
@@ -677,7 +695,12 @@
       button.textContent = priceRow ? '+ Add to Cart' : 'Price unavailable';
       button.disabled = !priceRow;
       if (!priceRow) button.classList.add('cursor-not-allowed','opacity-50');
-      button.addEventListener('click', () => addUbProductToCart(name));
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        addUbProductToCart(name);
+      });
+      button.classList.add('hidden');
       card.appendChild(button);
     });
   }
