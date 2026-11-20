@@ -2187,6 +2187,30 @@ function openChallanModal(billId) {
   const dStr = new Date(b.createdAtMs).toLocaleDateString("en-GB");
   const fileName = buildInvoiceFileName(b);
 
+  if (b.billingMode === "PATIENT") {
+    const total = Number(b.netAmount || b.subtotal || 0);
+    const received = Number(b.amountReceived || 0);
+    const due = Math.max(0, total - received);
+    const patientRows = (b.items || []).map((it, idx) => `
+      <tr class="border-b border-slate-300 text-xs"><td class="p-2 text-center">${idx+1}</td><td class="p-2 font-bold">${escapeHtml(it.medicineName || "")}</td><td class="p-2 text-center">${it.quantity}</td><td class="p-2 text-right">₹${Number(it.unitPrice || 0).toFixed(2)}</td><td class="p-2 text-right font-bold">₹${(Number(it.unitPrice || 0)*Number(it.quantity || 1)).toFixed(2)}</td></tr>
+    `).join("");
+    openModal(`Patient Billing Receipt — ${b.billNumber}`, `
+      <div class="border border-slate-400 p-4 bg-white text-slate-900 space-y-3 text-xs">
+        <div class="text-center"><div class="text-base font-black">UB AYURVED DRUGS &amp; PHARMACY</div><div>Belda, Paschim Medinipur, West Bengal - 721424</div><div>GSTIN: 19AOFPJ5320P1ZL | 9382292173</div><div class="mt-2 bg-rose-900 text-white p-2 font-black">PATIENT BILLING RECEIPT</div><div>Patient Billing (Incl. All Taxes)</div></div>
+        <div class="flex justify-between border-b py-2"><b>Bill / Receipt ID: ${escapeHtml(b.billNumber)}</b><b>Date: ${dStr}</b></div>
+        <div><b>Patient Name:</b> ${escapeHtml(b.patientName || "")} &nbsp; <b>Phone:</b> ${escapeHtml(b.patientMobile || "")}</div>
+        <div><b>Doctor / Rx Ref.:</b> ${escapeHtml(b.patientDoctor || "")}</div><div><b>Address:</b> ${escapeHtml(b.patientAddress || "")}</div>
+        <table class="w-full border border-slate-700"><thead class="bg-emerald-800 text-white"><tr><th class="p-2">Sl.</th><th class="p-2 text-left">Medicine Code / Name</th><th class="p-2">Qty.</th><th class="p-2">Rate (₹)</th><th class="p-2">Value (₹)</th></tr></thead><tbody>${patientRows}</tbody></table>
+        <div class="text-right space-y-1 font-bold"><div>Invoice Total: ₹${total.toFixed(2)}</div><div>Amount Received: ₹${received.toFixed(2)}</div><div>Balance / Due: ₹${due.toFixed(2)}</div><div>Payment Mode: ${escapeHtml(b.paymentMode || "CASH")}</div></div>
+        <div class="text-center pt-3">Thank you for choosing UB Ayurved.</div>
+        <div class="text-center text-slate-500">Stock Owner: UB Ayurved | Digital Billing Record Maintained</div>
+        <div class="text-[10px] text-slate-500">PDF File Name: <b>${escapeHtml(fileName.replace(/\.pdf$/i,"_PATIENT_RECEIPT.pdf"))}</b></div>
+      </div>
+      <div class="pt-3 flex justify-end gap-2"><button onclick="window.ubApp.closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">Close</button><button onclick="window.ubApp.downloadChallanPdf('${b.id}')" class="px-5 py-2 rounded-xl ub-green-bg text-white font-extrabold text-xs">Download Patient Receipt PDF</button></div>
+    `);
+    return;
+  }
+
   let totalHm = 0, totalMrp = 0;
   const rowsHtml = (b.items || []).map((it, idx) => {
     const rowHm = Number(it.unitPrice || 0) * Number(it.quantity || 1);
