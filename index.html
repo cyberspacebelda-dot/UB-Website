@@ -245,6 +245,15 @@
         class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100">
       <p id="ubProductSearchStatus" class="mt-2 text-xs font-semibold text-slate-500" aria-live="polite">Showing all 18 products</p>
     </div>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <label for="ubProductSort" class="text-xs font-bold text-slate-600">Sort products / সাজান</label>
+      <select id="ubProductSort" onchange="sortUbPublicProducts(this.value)" class="min-w-[190px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 shadow-sm focus:border-emerald-600 focus:outline-none">
+        <option value="default">Default order</option>
+        <option value="name-asc">Name: A to Z</option>
+        <option value="price-asc">MRP: Low to High</option>
+        <option value="price-desc">MRP: High to Low</option>
+      </select>
+    </div>
     <div id="ubProductCategoryFilters" class="flex flex-wrap gap-2 mb-4" aria-label="Filter products by category"></div>
     <div id="ubProductGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       <article class="ub-product-card">
@@ -465,6 +474,29 @@
       });
       host.appendChild(button);
     });
+  }
+
+  function sortUbPublicProducts(mode) {
+    const grid = document.getElementById('ubProductGrid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.ub-product-card'));
+    const originalOrder = new Map(cards.map((card, index) => [card, index]));
+    cards.sort((a, b) => {
+      const nameA = a.querySelector('h3')?.textContent.trim() || '';
+      const nameB = b.querySelector('h3')?.textContent.trim() || '';
+      if (mode === 'name-asc') return nameA.localeCompare(nameB);
+      if (mode === 'price-asc' || mode === 'price-desc') {
+        const rowA = getUbPublicPriceRow(nameA);
+        const rowB = getUbPublicPriceRow(nameB);
+        const priceA = rowA ? Number(rowA[3]) : Number.POSITIVE_INFINITY;
+        const priceB = rowB ? Number(rowB[3]) : Number.POSITIVE_INFINITY;
+        const difference = mode === 'price-asc' ? priceA - priceB : priceB - priceA;
+        return difference || nameA.localeCompare(nameB);
+      }
+      return originalOrder.get(a) - originalOrder.get(b);
+    });
+    cards.forEach(card => grid.appendChild(card));
+    filterUbPublicProducts(document.getElementById('ubProductSearch')?.value || '');
   }
 
   function filterUbPublicProducts(query) {
