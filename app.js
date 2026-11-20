@@ -123,6 +123,7 @@ const state = {
   billSelectedHmCode: "",
   billMode: "DISPENSARY_CHALLAN", // DISPENSARY_CHALLAN | HM_PR | HM1 | HM2 | HM3 | PATIENT
   billPatientName: "",
+  billPatientId: "",
   billPatientMobile: "",
   billPatientDoctor: "",
   billPatientAddress: "",
@@ -900,6 +901,8 @@ function renderNewBillTab(container) {
           ${state.billMode === "PATIENT" ? `
             <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label class="block text-xs font-bold text-slate-700 mb-1">Patient Name *</label><input required value="${escapeAttr(state.billPatientName)}" oninput="window.ubApp.setPatientField('name',this.value)" placeholder="Patient full name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
+              <div><label class="block text-xs font-bold text-slate-700 mb-1">Patient ID *</label><input required value="${escapeAttr(state.billPatientId)}" oninput="window.ubApp.setPatientField('id',this.value)" placeholder="Enter Patient ID manually" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs uppercase" /></div>
+              <div class="flex items-end"><a href="https://ubeprescription.base44.app/" target="_blank" rel="noopener noreferrer" class="w-full text-center rounded-xl bg-indigo-700 text-white px-3 py-2 text-xs font-bold">Open E-Prescription ↗</a></div>
               <div><label class="block text-xs font-bold text-slate-700 mb-1">Phone No.</label><input value="${escapeAttr(state.billPatientMobile)}" oninput="window.ubApp.setPatientField('mobile',this.value)" placeholder="Mobile number" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
               <div><label class="block text-xs font-bold text-slate-700 mb-1">Doctor / Rx Ref.</label><input value="${escapeAttr(state.billPatientDoctor)}" oninput="window.ubApp.setPatientField('doctor',this.value)" placeholder="Prescription reference" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
               <div><label class="block text-xs font-bold text-slate-700 mb-1">Address</label><input value="${escapeAttr(state.billPatientAddress)}" oninput="window.ubApp.setPatientField('address',this.value)" placeholder="Patient address" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" /></div>
@@ -2059,6 +2062,10 @@ async function submitNewChallan() {
     showToast("Patient name is compulsory.");
     return;
   }
+  if (isPatientBill && !state.billPatientId.trim()) {
+    showToast("Patient ID is compulsory.");
+    return;
+  }
   const patientReceived = Number(state.billReceivedAmount || 0);
   if (isPatientBill && (!Number.isFinite(patientReceived) || patientReceived < 0 || patientReceived > state.billItems.reduce((acc, it) => acc + (it.unitPrice * it.quantity), 0))) {
     showToast("Amount received must be between ₹0 and the invoice total.");
@@ -2090,6 +2097,7 @@ async function submitNewChallan() {
     pincode: isPatientBill ? "" : (hm.pincode || ""),
     branch: isPatientBill ? "Belda Main Branch" : (hm.branch || "Belda HQ"),
     patientName: isPatientBill ? state.billPatientName.trim() : "",
+    patientId: isPatientBill ? state.billPatientId.trim().toUpperCase() : "",
     patientMobile: isPatientBill ? state.billPatientMobile.trim() : "",
     patientDoctor: isPatientBill ? state.billPatientDoctor.trim() : "",
     patientAddress: isPatientBill ? state.billPatientAddress.trim() : "",
@@ -2127,7 +2135,7 @@ async function submitNewChallan() {
     await setDoc(doc(db, "bills", billId), payload);
     state.billItems = [];
     const savedFor = isPatientBill ? state.billPatientName.trim() : hm.name;
-    state.billPatientName = ""; state.billPatientMobile = ""; state.billPatientDoctor = ""; state.billPatientAddress = ""; state.billReceivedAmount = "";
+    state.billPatientName = ""; state.billPatientId = ""; state.billPatientMobile = ""; state.billPatientDoctor = ""; state.billPatientAddress = ""; state.billReceivedAmount = "";
     showToast(`Generated ${isPatientBill ? "Patient Receipt" : "Challan"} ${billNumber} for ${savedFor}!`);
     state.activeTab = "ORDERS";
     renderDashboard();
@@ -2201,7 +2209,7 @@ function openChallanModal(billId) {
       <div class="border border-slate-400 p-4 bg-white text-slate-900 space-y-3 text-xs">
         <div class="text-center"><div class="text-base font-black">UB AYURVED DRUGS &amp; PHARMACY</div><div>Belda, Paschim Medinipur, West Bengal - 721424</div><div>GSTIN: 19AOFPJ5320P1ZL | 9382292173</div><div class="mt-2 bg-rose-900 text-white p-2 font-black">PATIENT BILLING RECEIPT</div><div>Patient Billing (Incl. All Taxes)</div></div>
         <div class="flex justify-between border-b py-2"><b>Bill / Receipt ID: ${escapeHtml(b.billNumber)}</b><b>Date: ${dStr}</b></div>
-        <div><b>Patient Name:</b> ${escapeHtml(b.patientName || "")} &nbsp; <b>Phone:</b> ${escapeHtml(b.patientMobile || "")}</div>
+        <div><b>Patient Name:</b> ${escapeHtml(b.patientName || "")} &nbsp; <b>Patient ID:</b> ${escapeHtml(b.patientId || "")} &nbsp; <b>Phone:</b> ${escapeHtml(b.patientMobile || "")}</div>
         <div><b>Doctor / Rx Ref.:</b> ${escapeHtml(b.patientDoctor || "")}</div><div><b>Address:</b> ${escapeHtml(b.patientAddress || "")}</div>
         <table class="w-full border border-slate-700"><thead class="bg-emerald-800 text-white"><tr><th class="p-2">Sl.</th><th class="p-2 text-left">Medicine Code / Name</th><th class="p-2">Qty.</th><th class="p-2">Rate (₹)</th><th class="p-2">Value (₹)</th></tr></thead><tbody>${patientRows}</tbody></table>
         <div class="text-right space-y-1 font-bold"><div>Invoice Total: ₹${total.toFixed(2)}</div><div>Amount Received: ₹${received.toFixed(2)}</div><div>Balance / Due: ₹${due.toFixed(2)}</div><div>Payment Mode: ${escapeHtml(b.paymentMode || "CASH")}</div></div>
@@ -2321,8 +2329,9 @@ function downloadChallanPdf(billId) {
     docPdf.text("PATIENT DETAILS", 310, 166);
     docPdf.setFont("helvetica","normal");
     docPdf.text(`Patient Name: ${String(bill.patientName || "")}`, 310, 182);
-    docPdf.text(`Phone: ${String(bill.patientMobile || "")}`, 310, 197);
-    docPdf.text(`Doctor / Rx Ref.: ${String(bill.patientDoctor || "")}`, 310, 212);
+    docPdf.text(`Patient ID: ${String(bill.patientId || "")}`, 310, 197);
+    docPdf.text(`Phone: ${String(bill.patientMobile || "")}`, 310, 212);
+    docPdf.text(`Doctor / Rx Ref.: ${String(bill.patientDoctor || "")}`, 310, 227);
     docPdf.text(`Address: ${String(bill.patientAddress || "")}`, 50, 197, { maxWidth: 245 });
     docPdf.text("Patient Billing (Incl. All Taxes)", 50, 218);
     const rows = (bill.items || []).map((it, i) => [
@@ -2630,6 +2639,7 @@ window.ubApp = {
   },
   setPatientField(field, val) {
     if (field === "name") state.billPatientName = val;
+    if (field === "id") state.billPatientId = val.trim().toUpperCase();
     if (field === "mobile") state.billPatientMobile = val;
     if (field === "doctor") state.billPatientDoctor = val;
     if (field === "address") state.billPatientAddress = val;
