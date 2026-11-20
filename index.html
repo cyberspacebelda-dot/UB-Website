@@ -358,12 +358,32 @@
   </section>
 
   <div id="ubProductPosterModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/90 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="ubPosterTitle" onclick="if(event.target===this) closeUbProductPoster()">
-    <div class="relative flex max-h-full w-full max-w-4xl flex-col items-center">
-      <div class="mb-3 flex w-full items-center justify-between gap-3 text-white">
-        <h3 id="ubPosterTitle" class="text-base sm:text-lg font-extrabold">Product Poster</h3>
-        <button type="button" onclick="closeUbProductPoster()" class="rounded-full bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25">Close ✕</button>
+    <div class="relative flex max-h-full w-full max-w-5xl flex-col overflow-y-auto rounded-2xl bg-white p-3 sm:p-5 shadow-2xl">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h3 id="ubPosterTitle" class="text-base sm:text-lg font-extrabold text-slate-900">Product Details</h3>
+        <button type="button" onclick="closeUbProductPoster()" class="shrink-0 rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200">Close ✕</button>
       </div>
-      <img id="ubPosterImage" src="" alt="" class="max-h-[82vh] max-w-full rounded-xl bg-white object-contain shadow-2xl">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(240px,.9fr)] md:items-start">
+        <div class="flex max-h-[65vh] items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+          <img id="ubPosterImage" src="" alt="" class="max-h-[65vh] max-w-full object-contain">
+        </div>
+        <div class="space-y-3">
+          <p class="text-xs font-extrabold uppercase tracking-[.18em] text-emerald-700">UB Ayurved • Product Information</p>
+          <h4 id="ubPosterProductName" class="text-xl font-black text-slate-900">Product Name</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-emerald-800">MRP</p>
+              <p id="ubPosterMrp" class="mt-1 text-2xl font-black text-emerald-950">—</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p class="text-xs font-bold text-slate-500">Pack Details</p>
+              <p id="ubPosterPack" class="mt-1 text-lg font-extrabold text-slate-900">—</p>
+            </div>
+          </div>
+          <p id="ubPosterPriceNote" class="text-xs leading-relaxed text-slate-500">MRP and pack information are shown from the current product price list.</p>
+          <p class="rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">Product information only. Please refer to the product label for usage and other instructions.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -454,14 +474,52 @@
 
   addUbPublicProductPriceDetails();
 
+  function getUbPublicPriceRow(productName) {
+    const list = window.FINAL_PRICE_LIST_2026 || [];
+    const byName = new Map(list.map(row => [String(row[1] || '').trim().toUpperCase(), row]));
+    const aliases = {
+      'BODY BOOST TABLETS': 'BODY BOOST TAB.',
+      'DENTAL CARE TOOTHPASTE': 'DENTAL CARE(TOOTHPAST)',
+      'FEMENERGY BOOST': 'FEMENERGY',
+      'ALLERGY CARE': 'ALLERGY CARE CAPSULE',
+      'LIVO META CAPSULES': 'LIVO-META CAPSULE',
+      'PILO GUARD CAPSULES': 'PILO GUARD CAPSULE',
+      'STAMINA CAPSULES': 'STAMINA CAPSULE',
+      'SMRITI PLUS': 'SMRITI PLUS SYRUP',
+      'NEURO CARE': 'NEURO CARE CAPSULE',
+      'BAL AMRUT': 'BAL AMRIT SYRUP',
+      'HAIR CARE': 'HAIR CARE (SHAMPOO)',
+      'HAIR OIL': 'HAIR OIL (PREMIUM)'
+    };
+    return byName.get(aliases[String(productName || '').trim().toUpperCase()] || String(productName || '').trim().toUpperCase()) || null;
+  }
+
   function openUbProductPoster(slug, name) {
     const modal = document.getElementById('ubProductPosterModal');
     const image = document.getElementById('ubPosterImage');
     const title = document.getElementById('ubPosterTitle');
+    const productName = document.getElementById('ubPosterProductName');
+    const mrp = document.getElementById('ubPosterMrp');
+    const pack = document.getElementById('ubPosterPack');
+    const note = document.getElementById('ubPosterPriceNote');
     if (!modal || !image || !title) return;
-    title.textContent = name + ' — Product Poster';
+
+    title.textContent = name + ' — Product Details';
+    if (productName) productName.textContent = name;
     image.src = 'https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/' + slug + '.webp';
     image.alt = 'UB Ayurved ' + name + ' product poster';
+
+    const row = getUbPublicPriceRow(name);
+    if (row) {
+      if (mrp) mrp.textContent = '₹' + Number(row[3]).toLocaleString('en-IN');
+      if (pack) pack.textContent = row[2] || 'Not listed';
+      if (note) note.textContent = 'MRP and pack details are taken from the current 2026 product price list.';
+    } else {
+      if (mrp) mrp.textContent = 'Not listed';
+      if (pack) pack.textContent = 'Not listed';
+      if (note) note.textContent = 'Price or pack information is not available in the current product price list. Please confirm with the office.';
+    }
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
