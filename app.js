@@ -132,7 +132,7 @@ const state = {
 
 // Build base 273 catalog map
 const BASE_CATALOG_2026 = (window.FINAL_PRICE_LIST_2026 || []).map(row => {
-  const [slNo, name, quantityNetContent, mrpPrice, hm1Price, hm2Price, hm3Price, patientPrice] = row;
+  const [slNo, name, quantityNetContent, mrpPrice, hmPrPrice, hm1Price, hm2Price, hm3Price, patientPrice] = row;
   return {
     id: `med_${slNo}`,
     slNo,
@@ -140,6 +140,7 @@ const BASE_CATALOG_2026 = (window.FINAL_PRICE_LIST_2026 || []).map(row => {
     codeName: deriveCodeName(name),
     quantityNetContent,
     mrpPrice: Number(mrpPrice),
+    hmPrPrice: Number(hmPrPrice),
     hm1Price: Number(hm1Price),
     hm2Price: Number(hm2Price),
     hm3Price: Number(hm3Price),
@@ -173,6 +174,7 @@ function getMergedMedicines() {
       codeName: src.codeName || deriveCodeName(src.name || cat.name),
       quantityNetContent: src.quantityNetContent || cat.quantityNetContent,
       mrpPrice: Number(src.mrpPrice ?? cat.mrpPrice),
+      hmPrPrice: Number(src.hmPrPrice ?? cat.hmPrPrice),
       hm1Price: Number(src.hm1Price ?? cat.hm1Price),
       hm2Price: Number(src.hm2Price ?? cat.hm2Price),
       hm3Price: Number(src.hm3Price ?? cat.hm3Price),
@@ -195,6 +197,7 @@ function getMergedMedicines() {
         codeName: ov.codeName || deriveCodeName(ov.name || ""),
         quantityNetContent: ov.quantityNetContent || "",
         mrpPrice: Number(ov.mrpPrice || 0),
+        hmPrPrice: Number(ov.hmPrPrice || 0),
         hm1Price: Number(ov.hm1Price || 0),
         hm2Price: Number(ov.hm2Price || 0),
         hm3Price: Number(ov.hm3Price || 0),
