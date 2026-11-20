@@ -475,6 +475,7 @@ function loginHm() {
 
 function logout() {
   state.currentUser = null;
+  window.setUbPublicCartAccess?.(false);
   localStorage.removeItem("ub_web_session");
   document.getElementById("dashboardView").classList.add("hidden");
   document.getElementById("headerUserControls").classList.add("hidden");
@@ -484,6 +485,7 @@ function logout() {
 
 function enterDashboard() {
   if (!state.currentUser) return;
+  window.setUbPublicCartAccess?.(true);
   document.getElementById("loginView").classList.add("hidden");
   document.getElementById("dashboardView").classList.remove("hidden");
   const hc = document.getElementById("headerUserControls");
