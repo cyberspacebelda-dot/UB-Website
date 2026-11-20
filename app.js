@@ -894,7 +894,7 @@ function renderNewBillTab(container) {
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       <!-- Left Column: Select HM & Add Medicines -->
       <div class="lg:col-span-7 bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-4">
-        <h3 class="text-base font-extrabold ub-green-text">1. Select Health Mitra &amp; Medicines</h3>
+        <h3 class="text-base font-extrabold ub-green-text">${state.billMode === "PATIENT" ? "1. Patient Details &amp; Medicines" : "1. Select Health Mitra &amp; Medicines"}</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           ${state.billMode === "PATIENT" ? `
@@ -933,7 +933,7 @@ function renderNewBillTab(container) {
 
         <!-- Medicine Search & Add List -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Search Medicine to Add to Challan</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Search Medicine to Add to ${state.billMode === "PATIENT" ? "Receipt" : "Challan"}</label>
           <input type="text"
                  value="${escapeAttr(state.billMedSearch)}"
                  oninput="window.ubApp.updateBillMedSearch(this.value)"
@@ -950,9 +950,7 @@ function renderNewBillTab(container) {
                   <div class="text-xs font-extrabold text-slate-900">#${m.slNo} ${escapeHtml(m.name)} <span class="text-slate-500 font-semibold">(${escapeHtml(m.quantityNetContent)})</span></div>
                   <div class="text-[11px] text-slate-600 font-semibold">
                     MRP: ₹${m.mrpPrice.toFixed(0)} •
-                    ${visibleMode === "ALL_THREE"
-                      ? `HM1: ₹${m.hm1Price} | HM2: ₹${m.hm2Price} | HM3: ₹${m.hm3Price}`
-                      : `${targetRank} Rate: ₹${unitRate}`}
+                    ${state.billMode === "PATIENT" ? `Patient Rate: ₹${m.patientPrice}` : state.billMode === "HM_PR" ? `HM.PR. Rate: ₹${m.hmPrPrice}` : `${state.billMode.replace("HM","HM ")} Rate: ₹${unitRate}`}
                   </div>
                 </div>
                 <button onclick="window.ubApp.addMedToBill('${escapeAttr(m.id)}')"
@@ -969,7 +967,7 @@ function renderNewBillTab(container) {
       <div class="lg:col-span-5 bg-white rounded-2xl shadow-xs border border-slate-200 p-4 flex flex-col justify-between space-y-4">
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-extrabold ub-green-text">2. Stock Transfer Challan Cart</h3>
+            <h3 class="text-base font-extrabold ub-green-text">2. ${state.billMode === "PATIENT" ? "Patient Invoice Cart" : "Stock Transfer Challan Cart"}</h3>
             <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold ub-green-light ub-green-text">
               ${state.billItems.length} Items
             </span>
@@ -977,7 +975,7 @@ function renderNewBillTab(container) {
 
           ${state.billItems.length === 0 ? `
             <div class="text-xs text-slate-500 bg-slate-50 rounded-xl p-6 text-center border border-dashed border-slate-300">
-              No medicines added yet. Click <b>+ Add</b> on any medicine from the left panel.
+              No medicines added yet. Click <b>+ Add</b> on any medicine from the left panel to add it to the ${state.billMode === "PATIENT" ? "receipt" : "challan"}.
             </div>
           ` : `
             <div class="max-h-64 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-200">
@@ -2061,6 +2059,11 @@ async function submitNewChallan() {
     showToast("Patient name is compulsory.");
     return;
   }
+  const patientReceived = Number(state.billReceivedAmount || 0);
+  if (isPatientBill && (!Number.isFinite(patientReceived) || patientReceived < 0 || patientReceived > state.billItems.reduce((acc, it) => acc + (it.unitPrice * it.quantity), 0))) {
+    showToast("Amount received must be between ₹0 and the invoice total.");
+    return;
+  }
 
   const nextNum = state.bills.length + 73;
   const billNumber = `VD/${String(nextNum).padStart(5, "0")}`;
@@ -2090,8 +2093,8 @@ async function submitNewChallan() {
     patientMobile: isPatientBill ? state.billPatientMobile.trim() : "",
     patientDoctor: isPatientBill ? state.billPatientDoctor.trim() : "",
     patientAddress: isPatientBill ? state.billPatientAddress.trim() : "",
-    amountReceived: isPatientBill ? Number(state.billReceivedAmount || 0) : Number(subtotal),
-    balanceDue: isPatientBill ? Math.max(0, subtotal - Number(state.billReceivedAmount || 0)) : 0,
+    amountReceived: isPatientBill ? patientReceived : Number(subtotal),
+    balanceDue: isPatientBill ? Math.max(0, subtotal - patientReceived) : 0,
     billingMode: state.billMode,
     paymentMode: state.billPaymentMode,
     items: state.billItems.map(it => ({
@@ -2107,9 +2110,9 @@ async function submitNewChallan() {
     discount: Number(discount),
     netAmount: Number(subtotal),
     previousBalance: isPatientBill ? 0 : Number(hm.creditBalance || 0),
-    currentBalance: isPatientBill ? Math.max(0, subtotal - Number(state.billReceivedAmount || 0)) : Number(hm.creditBalance || 0),
+    currentBalance: isPatientBill ? Math.max(0, subtotal - patientReceived) : Number(hm.creditBalance || 0),
     isChallanOnly: !isPatientBill,
-    status: isPatientBill ? (Number(state.billReceivedAmount || 0) >= subtotal ? "PAID" : "PENDING") : (isOffice ? "PAID" : "PENDING"),
+    status: isPatientBill ? (patientReceived >= subtotal ? "PAID" : "PENDING") : (isOffice ? "PAID" : "PENDING"),
     verifiedBy: isOffice ? (state.currentUser.displayName || "Office") : "",
     verifiedAt: isOffice ? Date.now() : 0,
     deliveredBy: "",
