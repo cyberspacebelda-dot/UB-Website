@@ -245,6 +245,7 @@
         class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100">
       <p id="ubProductSearchStatus" class="mt-2 text-xs font-semibold text-slate-500" aria-live="polite">Showing all 18 products</p>
     </div>
+    <div id="ubProductCategoryFilters" class="flex flex-wrap gap-2 mb-4" aria-label="Filter products by category"></div>
     <div id="ubProductGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       <article class="ub-product-card">
         <button type="button" class="w-full text-left" onclick="openUbProductPoster('kabz-rahat-churna','Kabz Rahat Churna')" aria-label="View Kabz Rahat Churna poster">
@@ -418,7 +419,54 @@
   <script src="./price-list-2026.js"></script>
   <script type="module" src="./app.js"></script>
 <script>
-  // Public catalogue search and verified MRP/pack details (never expose HM tier prices).
+  // Public catalogue category + search filters. HM tier prices remain private.
+  const ubPublicProductCategories = {
+    'Kabz Rahat Churna': 'Churna & Powder',
+    'Kesh Amrit Hair Oil': 'Oils',
+    'Body Boost Tablets': 'Tablets',
+    'Livo Meta Capsules': 'Capsules',
+    'OrthoRelief Tablets': 'Tablets',
+    'Pilo Guard Capsules': 'Capsules',
+    'Stamina Capsules': 'Capsules',
+    'Dental Care Toothpaste': 'Oral Care',
+    'Happy Heart Kadha': 'Kadha & Liquid',
+    'Amrit Ras': 'Kadha & Liquid',
+    'Femenergy Boost': 'Capsules',
+    'OJA Tail': 'Oils',
+    'Smriti Plus': 'Kadha & Liquid',
+    'Allergy Care': 'Capsules',
+    'Bal Amrut': 'Kadha & Liquid',
+    'Hair Care': 'Personal Care',
+    'Hair Oil': 'Oils',
+    'Neuro Care': 'Capsules'
+  };
+  let ubActiveProductCategory = 'All';
+
+  function renderUbProductCategoryFilters() {
+    const host = document.getElementById('ubProductCategoryFilters');
+    const grid = document.getElementById('ubProductGrid');
+    if (!host || !grid) return;
+    const categories = ['All', ...new Set(Object.values(ubPublicProductCategories))];
+    grid.querySelectorAll('.ub-product-card').forEach(card => {
+      const heading = card.querySelector('h3');
+      card.dataset.category = ubPublicProductCategories[heading ? heading.textContent.trim() : ''] || 'Other';
+    });
+    host.innerHTML = '';
+    categories.forEach(category => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = category;
+      button.className = 'rounded-full border px-4 py-2 text-xs sm:text-sm font-bold transition ' + (category === ubActiveProductCategory ? 'bg-emerald-800 text-white border-emerald-800' : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-500 hover:text-emerald-800');
+      button.setAttribute('aria-pressed', String(category === ubActiveProductCategory));
+      button.addEventListener('click', () => {
+        ubActiveProductCategory = category;
+        renderUbProductCategoryFilters();
+        filterUbPublicProducts(document.getElementById('ubProductSearch')?.value || '');
+      });
+      host.appendChild(button);
+    });
+  }
+
   function filterUbPublicProducts(query) {
     const q = String(query || '').trim().toLowerCase();
     const grid = document.getElementById('ubProductGrid');
@@ -426,12 +474,14 @@
     const cards = Array.from(grid.querySelectorAll('.ub-product-card'));
     let visible = 0;
     cards.forEach(card => {
-      const match = card.textContent.toLowerCase().includes(q);
+      const categoryMatch = ubActiveProductCategory === 'All' || card.dataset.category === ubActiveProductCategory;
+      const searchMatch = card.textContent.toLowerCase().includes(q);
+      const match = categoryMatch && searchMatch;
       card.hidden = !match;
       if (match) visible++;
     });
     const status = document.getElementById('ubProductSearchStatus');
-    if (status) status.textContent = q ? ('Showing ' + visible + ' of ' + cards.length + ' products') : ('Showing all ' + cards.length + ' products');
+    if (status) status.textContent = 'Showing ' + visible + ' of ' + cards.length + ' products' + (ubActiveProductCategory === 'All' ? '' : ' • ' + ubActiveProductCategory);
   }
 
   function addUbPublicProductPriceDetails() {
@@ -473,6 +523,7 @@
   }
 
   addUbPublicProductPriceDetails();
+  renderUbProductCategoryFilters();
 
   function getUbPublicPriceRow(productName) {
     const list = window.FINAL_PRICE_LIST_2026 || [];
