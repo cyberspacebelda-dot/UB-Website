@@ -121,7 +121,12 @@ const state = {
   treeRootHmCode: "",
   // New Bill state
   billSelectedHmCode: "",
-  billMode: "DISPENSARY_CHALLAN", // DISPENSARY_CHALLAN | WITH_RETAIL_PROFIT
+  billMode: "DISPENSARY_CHALLAN", // DISPENSARY_CHALLAN | HM_PR | HM1 | HM2 | HM3 | PATIENT
+  billPatientName: "",
+  billPatientMobile: "",
+  billPatientDoctor: "",
+  billPatientAddress: "",
+  billReceivedAmount: "",
   billPaymentMode: "CASH", // CASH | ONLINE | CREDIT
   billOnlineAmount: "",
   billOnlineDate: new Date().toISOString().slice(0, 10),
@@ -236,6 +241,15 @@ function getPriceForHmRank(med, rankCode) {
   if (norm === "HM2") return med.hm2Price;
   if (norm === "HM3") return med.hm3Price;
   return med.hm1Price;
+}
+
+function getSelectedBillPrice(med, rankCode) {
+  if (state.billMode === "PATIENT") return Number(med.patientPrice || 0);
+  if (state.billMode === "HM_PR") return Number(med.hmPrPrice || 0);
+  if (state.billMode === "HM1") return Number(med.hm1Price || 0);
+  if (state.billMode === "HM2") return Number(med.hm2Price || 0);
+  if (state.billMode === "HM3") return Number(med.hm3Price || 0);
+  return Number(getPriceForHmRank(med, rankCode) || 0);
 }
 
 // ============================================================================
@@ -924,7 +938,7 @@ function renderNewBillTab(container) {
 
         <div class="max-h-80 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-200">
           ${matchingMeds.map(m => {
-            const unitRate = state.billMode === "WITH_RETAIL_PROFIT" ? m.patientPrice : getPriceForHmRank(m, targetRank);
+            const unitRate = getSelectedBillPrice(m, targetRank);
             return `
               <div class="p-2.5 flex items-center justify-between gap-2 hover:bg-slate-50">
                 <div>
@@ -1992,7 +2006,7 @@ function addMedToBill(medId) {
   const isHm = state.currentUser?.type === "HM";
   const selectedHm = state.healthMitras.find(h => String(h.hmCode).toUpperCase() === String(state.billSelectedHmCode).toUpperCase());
   const targetRank = normalizeRankCode(selectedHm?.rankCode || (isHm ? state.currentUser.rankCode : "HM1"));
-  const unitPrice = state.billMode === "WITH_RETAIL_PROFIT" ? med.patientPrice : getPriceForHmRank(med, targetRank);
+  const unitPrice = getSelectedBillPrice(med, targetRank);
 
   const existingIdx = state.billItems.findIndex(i => i.medicineId === med.id);
   if (existingIdx >= 0) {
@@ -2021,9 +2035,14 @@ async function submitNewChallan() {
     showToast("Please add at least one medicine to generate a challan.");
     return;
   }
+  const isPatientBill = state.billMode === "PATIENT";
   const hm = state.healthMitras.find(h => String(h.hmCode).toUpperCase() === String(state.billSelectedHmCode).toUpperCase());
-  if (!hm) {
+  if (!isPatientBill && !hm) {
     showToast("Please select a Health Mitra account first.");
+    return;
+  }
+  if (isPatientBill && !state.billPatientName.trim()) {
+    showToast("Patient name is compulsory.");
     return;
   }
 
@@ -2044,15 +2063,19 @@ async function submitNewChallan() {
   const payload = {
     id: billId,
     billNumber,
-    hmCode: hm.hmCode,
-    hmName: hm.name,
-    hmMobile: hm.mobileNo || "",
-    hmAddress: hm.hmAddress || hm.gpName || "BELDA",
-    gpName: hm.gpName || "",
-    pincode: hm.pincode || "",
-    branch: hm.branch || "Belda HQ",
-    patientName: "",
-    patientMobile: "",
+    hmCode: isPatientBill ? "" : hm.hmCode,
+    hmName: isPatientBill ? "" : hm.name,
+    hmMobile: isPatientBill ? "" : (hm.mobileNo || ""),
+    hmAddress: isPatientBill ? "" : (hm.hmAddress || hm.gpName || "BELDA"),
+    gpName: isPatientBill ? "" : (hm.gpName || ""),
+    pincode: isPatientBill ? "" : (hm.pincode || ""),
+    branch: isPatientBill ? "Belda Main Branch" : (hm.branch || "Belda HQ"),
+    patientName: isPatientBill ? state.billPatientName.trim() : "",
+    patientMobile: isPatientBill ? state.billPatientMobile.trim() : "",
+    patientDoctor: isPatientBill ? state.billPatientDoctor.trim() : "",
+    patientAddress: isPatientBill ? state.billPatientAddress.trim() : "",
+    amountReceived: isPatientBill ? Number(state.billReceivedAmount || 0) : Number(subtotal),
+    balanceDue: isPatientBill ? Math.max(0, subtotal - Number(state.billReceivedAmount || 0)) : 0,
     billingMode: state.billMode,
     paymentMode: state.billPaymentMode,
     items: state.billItems.map(it => ({
@@ -2067,10 +2090,10 @@ async function submitNewChallan() {
     subtotal: Number(subtotal),
     discount: Number(discount),
     netAmount: Number(subtotal),
-    previousBalance: Number(hm.creditBalance || 0),
-    currentBalance: Number(hm.creditBalance || 0),
-    isChallanOnly: true,
-    status: isOffice ? "PAID" : "PENDING",
+    previousBalance: isPatientBill ? 0 : Number(hm.creditBalance || 0),
+    currentBalance: isPatientBill ? Math.max(0, subtotal - Number(state.billReceivedAmount || 0)) : Number(hm.creditBalance || 0),
+    isChallanOnly: !isPatientBill,
+    status: isPatientBill ? (Number(state.billReceivedAmount || 0) >= subtotal ? "PAID" : "PENDING") : (isOffice ? "PAID" : "PENDING"),
     verifiedBy: isOffice ? (state.currentUser.displayName || "Office") : "",
     verifiedAt: isOffice ? Date.now() : 0,
     deliveredBy: "",
@@ -2084,7 +2107,9 @@ async function submitNewChallan() {
   try {
     await setDoc(doc(db, "bills", billId), payload);
     state.billItems = [];
-    showToast(`Generated Challan ${billNumber} for ${hm.name}!`);
+    const savedFor = isPatientBill ? state.billPatientName.trim() : hm.name;
+    state.billPatientName = ""; state.billPatientMobile = ""; state.billPatientDoctor = ""; state.billPatientAddress = ""; state.billReceivedAmount = "";
+    showToast(`Generated ${isPatientBill ? "Patient Receipt" : "Challan"} ${billNumber} for ${savedFor}!`);
     state.activeTab = "ORDERS";
     renderDashboard();
   } catch (e) {
