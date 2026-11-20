@@ -82,6 +82,13 @@
       width: 0;
       height: 22px;
     }
+  .ub-product-card { overflow:hidden; border:1px solid #dce9df; border-radius:18px; background:#fff; box-shadow:0 8px 24px rgba(17,65,34,.07); transition:transform .18s ease,box-shadow .18s ease; }
+    #publicProductGallery .ub-product-card:hover { transform:translateY(-3px); box-shadow:0 14px 30px rgba(17,65,34,.13); }
+    #publicProductGallery .ub-product-card img { display:block; width:100%; aspect-ratio:3/4; object-fit:contain; background:linear-gradient(145deg,#f5fbf4,#fff); }
+    #publicProductGallery .ub-product-card div { padding:12px 13px 14px; border-top:1px solid #edf3ee; }
+    #publicProductGallery .ub-product-card h3 { color:#123f24; font-size:13px; line-height:1.35; font-weight:900; }
+    #publicProductGallery .ub-product-card p { color:#718078; font-size:11px; margin-top:3px; }
+    @media(max-width:420px) { #publicProductGallery .ub-product-card div { padding:9px; } #publicProductGallery .ub-product-card h3 { font-size:11px; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -220,7 +227,147 @@
     </div>
   </main>
 
-  <!-- DASHBOARD VIEW -->
+<!-- PUBLIC PRODUCT GALLERY — all 18 poster assets are stored in assets/products/ -->
+  <section id="publicProductGallery" class="w-full max-w-7xl mx-auto px-4 pb-12">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+      <div>
+        <p class="text-xs font-extrabold tracking-[.22em] text-emerald-700 uppercase">UB Ayurved • Product Range</p>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Our Products <span class="text-emerald-800">| আমাদের পণ্যসমূহ</span></h2>
+        <p class="text-sm text-slate-500 mt-1">Explore all 18 product posters. Tap any poster to view it larger.</p>
+        <p class="text-sm text-slate-500">১৮টি পণ্যের পোস্টার দেখুন। বড় করে দেখতে যেকোনো পোস্টারে চাপ দিন।</p>
+      </div>
+      <span class="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">18 Products • ১৮টি পণ্য</span>
+    </div>
+    <div class="mb-4">
+      <label for="ubProductSearch" class="sr-only">Search products</label>
+      <input id="ubProductSearch" type="search" oninput="filterUbPublicProducts(this.value)"
+        placeholder="Search products by name... / পণ্যের নাম লিখে খুঁজুন"
+        class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+      <p id="ubProductSearchStatus" class="mt-2 text-xs font-semibold text-slate-500" aria-live="polite">Showing all 18 products</p>
+    </div>
+    <div id="ubProductGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('kabz-rahat-churna','Kabz Rahat Churna')" aria-label="View Kabz Rahat Churna poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/kabz-rahat-churna.webp" alt="UB Ayurved Kabz Rahat Churna poster" loading="lazy">
+          <div><h3>Kabz Rahat Churna</h3><p>কবজ রহত চূর্ণ</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('kesh-amrit-hair-oil','Kesh Amrit Hair Oil')" aria-label="View Kesh Amrit Hair Oil poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/kesh-amrit-hair-oil.webp" alt="UB Ayurved Kesh Amrit Hair Oil poster" loading="lazy">
+          <div><h3>Kesh Amrit Hair Oil</h3><p>কেশ অমৃত হেয়ার অয়েল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('body-boost-tablets','Body Boost Tablets')" aria-label="View Body Boost Tablets poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/body-boost-tablets.webp" alt="UB Ayurved Body Boost Tablets poster" loading="lazy">
+          <div><h3>Body Boost Tablets</h3><p>বডি বুস্ট ট্যাবলেট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('livo-meta-capsules','Livo Meta Capsules')" aria-label="View Livo Meta Capsules poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/livo-meta-capsules.webp" alt="UB Ayurved Livo Meta Capsules poster" loading="lazy">
+          <div><h3>Livo Meta Capsules</h3><p>লিভো মেটা ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('ortho-relief-tablets','OrthoRelief Tablets')" aria-label="View OrthoRelief Tablets poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/ortho-relief-tablets.webp" alt="UB Ayurved OrthoRelief Tablets poster" loading="lazy">
+          <div><h3>OrthoRelief Tablets</h3><p>অর্থো রিলিফ ট্যাবলেট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('pilo-guard-capsules','Pilo Guard Capsules')" aria-label="View Pilo Guard Capsules poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/pilo-guard-capsules.webp" alt="UB Ayurved Pilo Guard Capsules poster" loading="lazy">
+          <div><h3>Pilo Guard Capsules</h3><p>পাইলো গার্ড ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('stamina-capsules','Stamina Capsules')" aria-label="View Stamina Capsules poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/stamina-capsules.webp" alt="UB Ayurved Stamina Capsules poster" loading="lazy">
+          <div><h3>Stamina Capsules</h3><p>স্ট্যামিনা ক্যাপসুল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('dental-care-toothpaste','Dental Care Toothpaste')" aria-label="View Dental Care Toothpaste poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/dental-care-toothpaste.webp" alt="UB Ayurved Dental Care Toothpaste poster" loading="lazy">
+          <div><h3>Dental Care Toothpaste</h3><p>ডেন্টাল কেয়ার টুথপেস্ট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('happy-heart-kadha','Happy Heart Kadha')" aria-label="View Happy Heart Kadha poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/happy-heart-kadha.webp" alt="UB Ayurved Happy Heart Kadha poster" loading="lazy">
+          <div><h3>Happy Heart Kadha</h3><p>হ্যাপি হার্ট কाढ़া</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('amrit-ras','Amrit Ras')" aria-label="View Amrit Ras poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/amrit-ras.webp" alt="UB Ayurved Amrit Ras poster" loading="lazy">
+          <div><h3>Amrit Ras</h3><p>আমৃত রস</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('femenergy-boost','Femenergy Boost')" aria-label="View Femenergy Boost poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/femenergy-boost.webp" alt="UB Ayurved Femenergy Boost poster" loading="lazy">
+          <div><h3>Femenergy Boost</h3><p>ফেমএনার্জি বুস্ট</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('oja-tail','OJA Tail')" aria-label="View OJA Tail poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/oja-tail.webp" alt="UB Ayurved OJA Tail poster" loading="lazy">
+          <div><h3>OJA Tail</h3><p>ওজা তৈল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('smriti-plus','Smriti Plus')" aria-label="View Smriti Plus poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/smriti-plus.webp" alt="UB Ayurved Smriti Plus poster" loading="lazy">
+          <div><h3>Smriti Plus</h3><p>স্মৃতি প্লাস</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('allergy-care','Allergy Care')" aria-label="View Allergy Care poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/allergy-care.webp" alt="UB Ayurved Allergy Care poster" loading="lazy">
+          <div><h3>Allergy Care</h3><p>অ্যালার্জি কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('bal-amrut','Bal Amrut')" aria-label="View Bal Amrut poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/bal-amrut.webp" alt="UB Ayurved Bal Amrut poster" loading="lazy">
+          <div><h3>Bal Amrut</h3><p>বাল অমৃত</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('hair-care','Hair Care')" aria-label="View Hair Care poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/hair-care.webp" alt="UB Ayurved Hair Care poster" loading="lazy">
+          <div><h3>Hair Care</h3><p>হেয়ার কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('hair-oil','Hair Oil')" aria-label="View Hair Oil poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/hair-oil.webp" alt="UB Ayurved Hair Oil poster" loading="lazy">
+          <div><h3>Hair Oil</h3><p>হেয়ার অয়েল</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+      <article class="ub-product-card">
+        <button type="button" class="w-full text-left" onclick="openUbProductPoster('neuro-care','Neuro Care')" aria-label="View Neuro Care poster">
+          <img src="https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/neuro-care.webp" alt="UB Ayurved Neuro Care poster" loading="lazy">
+          <div><h3>Neuro Care</h3><p>নিউরো কেয়ার</p><p class="mt-2 text-emerald-700 font-bold">View Poster • পোস্টার দেখুন</p></div>
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <div id="ubProductPosterModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/90 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="ubPosterTitle" onclick="if(event.target===this) closeUbProductPoster()">
+    <div class="relative flex max-h-full w-full max-w-4xl flex-col items-center">
+      <div class="mb-3 flex w-full items-center justify-between gap-3 text-white">
+        <h3 id="ubPosterTitle" class="text-base sm:text-lg font-extrabold">Product Poster</h3>
+        <button type="button" onclick="closeUbProductPoster()" class="rounded-full bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25">Close ✕</button>
+      </div>
+      <img id="ubPosterImage" src="" alt="" class="max-h-[82vh] max-w-full rounded-xl bg-white object-contain shadow-2xl">
+    </div>
+  </div>
+
+    <!-- DASHBOARD VIEW -->
   <div id="dashboardView" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 gap-3">
 
     <!-- UPPER SECTION (Office KPIs OR HM Self Orders Only) -->
@@ -250,5 +397,85 @@
 
   <script src="./price-list-2026.js"></script>
   <script type="module" src="./app.js"></script>
+<script>
+  // Public catalogue search and verified MRP/pack details (never expose HM tier prices).
+  function filterUbPublicProducts(query) {
+    const q = String(query || '').trim().toLowerCase();
+    const grid = document.getElementById('ubProductGrid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.ub-product-card'));
+    let visible = 0;
+    cards.forEach(card => {
+      const match = card.textContent.toLowerCase().includes(q);
+      card.hidden = !match;
+      if (match) visible++;
+    });
+    const status = document.getElementById('ubProductSearchStatus');
+    if (status) status.textContent = q ? ('Showing ' + visible + ' of ' + cards.length + ' products') : ('Showing all ' + cards.length + ' products');
+  }
+
+  function addUbPublicProductPriceDetails() {
+    const list = window.FINAL_PRICE_LIST_2026 || [];
+    const byName = new Map(list.map(row => [String(row[1] || '').trim().toUpperCase(), row]));
+    const aliases = {
+      'KABZ RAHAT CHURNA': 'KABZ RAHAT CHURNA',
+      'BODY BOOST TABLETS': 'BODY BOOST TAB.',
+      'DENTAL CARE TOOTHPASTE': 'DENTAL CARE(TOOTHPAST)',
+      'HAPPY HEART KADHA': 'HAPPY HEART KADHA',
+      'AMRIT RAS': 'AMRIT RAS',
+      'FEMENERGY BOOST': 'FEMENERGY',
+      'ALLERGY CARE': 'ALLERGY CARE CAPSULE',
+      'LIVO META CAPSULES': 'LIVO-META CAPSULE',
+      'PILO GUARD CAPSULES': 'PILO GUARD CAPSULE',
+      'STAMINA CAPSULES': 'STAMINA CAPSULE',
+      'SMRITI PLUS': 'SMRITI PLUS SYRUP',
+      'NEURO CARE': 'NEURO CARE CAPSULE',
+      'BAL AMRUT': 'BAL AMRIT SYRUP',
+      'HAIR CARE': 'HAIR CARE (SHAMPOO)',
+      'HAIR OIL': 'HAIR OIL (PREMIUM)'
+    };
+    document.querySelectorAll('#ubProductGrid .ub-product-card').forEach(card => {
+      const heading = card.querySelector('h3');
+      if (!heading || card.querySelector('.ub-public-price')) return;
+      const key = heading.textContent.trim().toUpperCase();
+      const row = byName.get(aliases[key] || key);
+      const detail = document.createElement('p');
+      detail.className = 'ub-public-price mt-2 font-extrabold text-emerald-800';
+      if (row) {
+        detail.textContent = 'MRP ₹' + Number(row[3]).toLocaleString('en-IN') + ' • ' + row[2];
+      } else {
+        detail.textContent = 'Price available at office';
+        detail.classList.add('text-slate-500');
+      }
+      const content = heading.parentElement;
+      if (content) content.appendChild(detail);
+    });
+  }
+
+  addUbPublicProductPriceDetails();
+
+  function openUbProductPoster(slug, name) {
+    const modal = document.getElementById('ubProductPosterModal');
+    const image = document.getElementById('ubPosterImage');
+    const title = document.getElementById('ubPosterTitle');
+    if (!modal || !image || !title) return;
+    title.textContent = name + ' — Product Poster';
+    image.src = 'https://raw.githubusercontent.com/cyberspacebelda-dot/UB-Website/hm-google-email-auth-v1/assets/products/' + slug + '.webp';
+    image.alt = 'UB Ayurved ' + name + ' product poster';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeUbProductPoster() {
+    const modal = document.getElementById('ubProductPosterModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeUbProductPoster();
+  });
+</script>
 </body>
 </html>
