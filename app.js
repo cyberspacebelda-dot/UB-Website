@@ -57,7 +57,7 @@ const MEMBER_RANK_OPTIONS = [
   { code: "RSM", title: "Regional Sales Manager", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" }
 ];
 
-const PROMOTION_LADDER = ["HM1", "HM2", "HM3", "MR", "SR", "SE", "SO", "TSM", "ASM", "RSM"];
+const PROMOTION_LADDER = ["HM_PR", "HM1", "HM2", "HM3", "MR", "SR", "SE", "SO", "TSM", "ASM", "RSM"];
 
 function normalizeRankCode(rawCode) {
   const clean = String(rawCode || "").trim().toUpperCase();
