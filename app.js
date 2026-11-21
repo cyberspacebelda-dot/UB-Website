@@ -80,8 +80,12 @@ function isHmSelfTier(rawCode) {
 }
 
 const EXTRA_RANK_CODES = new Set(["MR", "SR", "SE", "SO", "TSM", "ASM", "RSM"]);
+function normalizeExtraRank(rawCode) {
+  const clean = String(rawCode || "").trim().toUpperCase();
+  return EXTRA_RANK_CODES.has(clean) ? clean : "";
+}
 function hasExtraRank(hm) {
-  return EXTRA_RANK_CODES.has(normalizeRankCode(hm?.extraRank));
+  return EXTRA_RANK_CODES.has(normalizeExtraRank(hm?.extraRank));
 }
 
 function deriveCodeName(name) {
@@ -286,7 +290,7 @@ function initFirestoreListeners() {
         photoUri: data.photoUri || "",
         sponsorHmId: data.sponsorHmId || "",
         rankCode: normalizeRankCode(data.rankCode || "HM1"),
-        extraRank: normalizeRankCode(data.extraRank || ""),
+        extraRank: normalizeExtraRank(data.extraRank),
         password: data.password || "123456",
         creditBalance: Number(data.creditBalance || 0),
         totalSelfSales: Number(data.totalSelfSales || 0),
@@ -1828,7 +1832,7 @@ async function submitRegisterHm() {
     photoUri: "",
     sponsorHmId,
     rankCode,
-    extraRank: normalizeRankCode(document.getElementById("regHmExtraRank")?.value || ""),
+    extraRank: normalizeExtraRank(document.getElementById("regHmExtraRank")?.value),
     password,
     creditBalance: 0,
     totalSelfSales: 0,
@@ -1884,7 +1888,7 @@ function openEditHmProfileModal(hmCode) {
         <label class="font-bold text-slate-700">Extra Rank (Optional)</label>
         <select id="updHmExtraRank" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-extrabold mt-1">
           <option value="">None</option>
-          ${["MR","SR","SE","SO","TSM","ASM","RSM"].map(code => `<option value="${code}" ${normalizeRankCode(hm.extraRank) === code ? "selected" : ""}>${code} — ${getRankTitle(code)}</option>`).join("")}
+          ${["MR","SR","SE","SO","TSM","ASM","RSM"].map(code => `<option value="${code}" ${normalizeExtraRank(hm.extraRank) === code ? "selected" : ""}>${code} — ${getRankTitle(code)}</option>`).join("")}
         </select>
       </div>
       <div>
@@ -1921,7 +1925,7 @@ async function submitUpdateHmProfile(hmCode) {
   const name = document.getElementById("updHmName").value.trim() || hm.name;
   const mobileNo = document.getElementById("updHmMobile").value.trim() || hm.mobileNo;
   const rankCode = normalizeRankCode(document.getElementById("updHmRank").value);
-  const extraRank = normalizeRankCode(document.getElementById("updHmExtraRank")?.value || "");
+  const extraRank = normalizeExtraRank(document.getElementById("updHmExtraRank")?.value);
   const sponsorHmId = document.getElementById("updHmSponsor").value.trim().toUpperCase();
   const password = document.getElementById("updHmPass").value.trim() || "123456";
   const hmAddress = document.getElementById("updHmAddr").value.trim();
