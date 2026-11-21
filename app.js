@@ -816,14 +816,21 @@ function renderPriceListTab(container) {
               <th class="py-2.5 px-3">Product Name &amp; Code</th>
               <th class="py-2.5 px-3">Pack / Net</th>
               <th class="py-2.5 px-3 text-right">MRP</th>
-              ${visibleMode === "ALL_THREE" ? `
-                <th class="py-2.5 px-3 text-right bg-emerald-100/70">HM.1 Price</th>
-                <th class="py-2.5 px-3 text-right bg-blue-50">HM.2 Price</th>
-                <th class="py-2.5 px-3 text-right bg-amber-50">HM.3 Price</th>
-              ` : visibleMode === "ONLY_HM2" ? `
-                <th class="py-2.5 px-3 text-right bg-blue-50">HM.2 Price</th>
+              ${visibleMode === "ALL_FOUR" ? `
+                <th class="py-2.5 px-3 text-right bg-violet-50">HM-PR Price</th>
+                <th class="py-2.5 px-3 text-right bg-emerald-100/70">HM1 Price</th>
+                <th class="py-2.5 px-3 text-right bg-blue-50">HM2 Price</th>
+                <th class="py-2.5 px-3 text-right bg-amber-50">HM3 Price</th>
+              ` : visibleMode === "HM_PR_HM1" ? `
+                <th class="py-2.5 px-3 text-right bg-violet-50">HM-PR Price</th>
+                <th class="py-2.5 px-3 text-right bg-emerald-100/70">HM1 Price</th>
+              ` : visibleMode === "HM2_HM3" ? `
+                <th class="py-2.5 px-3 text-right bg-blue-50">HM2 Price</th>
+                <th class="py-2.5 px-3 text-right bg-amber-50">HM3 Price</th>
+              ` : visibleMode === "HM_PR_ONLY" ? `
+                <th class="py-2.5 px-3 text-right bg-violet-50">HM-PR Price</th>
               ` : `
-                <th class="py-2.5 px-3 text-right bg-amber-50">HM.3 Price</th>
+                <th class="py-2.5 px-3 text-right bg-amber-50">HM3 Price</th>
               `}
               <th class="py-2.5 px-3 text-right">Patient Price</th>
               ${state.currentUser.type === "OFFICE" ? `<th class="py-2.5 px-3 text-center">Stock</th>` : ""}
@@ -840,12 +847,19 @@ function renderPriceListTab(container) {
                 </td>
                 <td class="py-2.5 px-3 font-bold text-slate-700">${escapeHtml(m.quantityNetContent)}</td>
                 <td class="py-2.5 px-3 text-right font-semibold text-slate-600">₹${m.mrpPrice.toFixed(0)}</td>
-                ${visibleMode === "ALL_THREE" ? `
+                ${visibleMode === "ALL_FOUR" ? `
+                  <td class="py-2.5 px-3 text-right font-extrabold text-violet-800 bg-violet-50/50">₹${m.hmPrPrice.toFixed(0)}</td>
                   <td class="py-2.5 px-3 text-right font-extrabold text-[#125430] bg-emerald-50/50">₹${m.hm1Price.toFixed(0)}</td>
                   <td class="py-2.5 px-3 text-right font-extrabold text-[#164B8A] bg-blue-50/40">₹${m.hm2Price.toFixed(0)}</td>
                   <td class="py-2.5 px-3 text-right font-extrabold text-[#B36B00] bg-amber-50/40">₹${m.hm3Price.toFixed(0)}</td>
-                ` : visibleMode === "ONLY_HM2" ? `
+                ` : visibleMode === "HM_PR_HM1" ? `
+                  <td class="py-2.5 px-3 text-right font-extrabold text-violet-800 bg-violet-50/50">₹${m.hmPrPrice.toFixed(0)}</td>
+                  <td class="py-2.5 px-3 text-right font-extrabold text-[#125430] bg-emerald-50/50">₹${m.hm1Price.toFixed(0)}</td>
+                ` : visibleMode === "HM2_HM3" ? `
                   <td class="py-2.5 px-3 text-right font-extrabold text-[#164B8A] bg-blue-50/40">₹${m.hm2Price.toFixed(0)}</td>
+                  <td class="py-2.5 px-3 text-right font-extrabold text-[#B36B00] bg-amber-50/40">₹${m.hm3Price.toFixed(0)}</td>
+                ` : visibleMode === "HM_PR_ONLY" ? `
+                  <td class="py-2.5 px-3 text-right font-extrabold text-violet-800 bg-violet-50/50">₹${m.hmPrPrice.toFixed(0)}</td>
                 ` : `
                   <td class="py-2.5 px-3 text-right font-extrabold text-[#B36B00] bg-amber-50/40">₹${m.hm3Price.toFixed(0)}</td>
                 `}
