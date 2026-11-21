@@ -1757,7 +1757,7 @@ function openRegisterHmModal() {
       <div>
         <label class="font-bold text-slate-700">Select Rank / Tier (HM1, HM2, HM3 under MR)</label>
         <select id="regHmRank" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-extrabold mt-1">
-          ${MEMBER_RANK_OPTIONS.map(r => `
+          ${MEMBER_RANK_OPTIONS.filter(r => ["HM_PR", "HM1", "HM2", "HM3"].includes(r.code)).map(r => `
             <option value="${r.code}" ${r.code === 'HM1' ? 'selected' : ''}>
               ${r.code} — ${r.title} (${r.badgeHint})
             </option>
@@ -1873,7 +1873,7 @@ function openEditHmProfileModal(hmCode) {
       <div>
         <label class="font-bold text-slate-700">Rank / Designation</label>
         <select id="updHmRank" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-extrabold mt-1">
-          ${MEMBER_RANK_OPTIONS.map(r => `
+          ${MEMBER_RANK_OPTIONS.filter(r => ["HM_PR", "HM1", "HM2", "HM3"].includes(r.code)).map(r => `
             <option value="${r.code}" ${normalizeRankCode(hm.rankCode) === r.code ? 'selected' : ''}>
               ${r.code} — ${r.title}
             </option>
