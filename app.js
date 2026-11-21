@@ -766,12 +766,13 @@ function renderPriceListTab(container) {
   });
 
   const categories = ["ALL", "Tablets", "Capsules", "Syrups & Liquids", "Oils", "Powders & Care", "Ayurvedic Formulations"];
-  const tierBannerText =
-    visibleMode === "ONLY_HM2"
-      ? "HM2 Tier View: Showing MRP, HM.2 Price & Patient Price only"
-      : visibleMode === "ONLY_HM3"
-      ? "HM3 Tier View: Showing MRP, HM.3 Price & Patient Price only"
-      : "Showing All 3 HM Price Tiers (HM.1, HM.2 & HM.3) + MRP & Patient Price";
+  const tierBannerText = ({
+    HM_PR_ONLY: "HM-PR Primary: HM-PR Price + Patient Price + MRP",
+    HM_PR_HM1: "HM1 Primary: HM-PR Price + HM1 Price + Patient Price + MRP",
+    HM2_HM3: "HM2 Primary: HM2 + HM3 Prices + Patient Price + MRP",
+    HM3_ONLY: "HM3 Primary: HM3 Price + Patient Price + MRP",
+    ALL_FOUR: "Extra Rank / Office: All HM Prices + Patient Price + MRP"
+  })[visibleMode];
 
   container.innerHTML = `
     <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
@@ -1764,6 +1765,13 @@ function openRegisterHmModal() {
         </select>
       </div>
       <div>
+        <label class="font-bold text-slate-700">Extra Rank (Optional)</label>
+        <select id="regHmExtraRank" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-extrabold mt-1">
+          <option value="">None</option>
+          ${["MR","SR","SE","SO","TSM","ASM","RSM"].map(code => `<option value="${code}">${code} — ${getRankTitle(code)}</option>`).join("")}
+        </select>
+      </div>
+      <div>
         <label class="font-bold text-slate-700">Full Name</label>
         <input id="regHmName" type="text" placeholder="Enter Full Name" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold mt-1" />
       </div>
@@ -1820,6 +1828,7 @@ async function submitRegisterHm() {
     photoUri: "",
     sponsorHmId,
     rankCode,
+    extraRank: normalizeRankCode(document.getElementById("regHmExtraRank")?.value || ""),
     password,
     creditBalance: 0,
     totalSelfSales: 0,
@@ -1872,6 +1881,13 @@ function openEditHmProfileModal(hmCode) {
         </select>
       </div>
       <div>
+        <label class="font-bold text-slate-700">Extra Rank (Optional)</label>
+        <select id="updHmExtraRank" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-extrabold mt-1">
+          <option value="">None</option>
+          ${["MR","SR","SE","SO","TSM","ASM","RSM"].map(code => `<option value="${code}" ${normalizeRankCode(hm.extraRank) === code ? "selected" : ""}>${code} — ${getRankTitle(code)}</option>`).join("")}
+        </select>
+      </div>
+      <div>
         <label class="font-bold text-slate-700">Upline Sponsor HM Code</label>
         <input id="updHmSponsor" type="text" value="${escapeAttr(hm.sponsorHmId)}" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold uppercase mt-1" />
       </div>
@@ -1905,6 +1921,7 @@ async function submitUpdateHmProfile(hmCode) {
   const name = document.getElementById("updHmName").value.trim() || hm.name;
   const mobileNo = document.getElementById("updHmMobile").value.trim() || hm.mobileNo;
   const rankCode = normalizeRankCode(document.getElementById("updHmRank").value);
+  const extraRank = normalizeRankCode(document.getElementById("updHmExtraRank")?.value || "");
   const sponsorHmId = document.getElementById("updHmSponsor").value.trim().toUpperCase();
   const password = document.getElementById("updHmPass").value.trim() || "123456";
   const hmAddress = document.getElementById("updHmAddr").value.trim();
@@ -1917,6 +1934,7 @@ async function submitUpdateHmProfile(hmCode) {
       name,
       mobileNo,
       rankCode,
+      extraRank,
       sponsorHmId,
       password,
       hmAddress,
