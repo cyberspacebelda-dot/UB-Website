@@ -44,22 +44,24 @@ const OFFICE_ROLES = {
 };
 
 const MEMBER_RANK_OPTIONS = [
-  { code: "MR", title: "Medical Representative", isHmTier: false, badgeHint: "Upline Rank" },
-  { code: "HM1", title: "Health Mitra Tier 1", isHmTier: true, badgeHint: "Under MR • Sees All 3 HM Prices" },
-  { code: "HM2", title: "Health Mitra Tier 2", isHmTier: true, badgeHint: "Under MR • HM2 Price Only" },
-  { code: "HM3", title: "Health Mitra Tier 3", isHmTier: true, badgeHint: "Under MR • HM3 Price Only" },
-  { code: "SR", title: "Senior Representative", isHmTier: false, badgeHint: "Rank Holder" },
-  { code: "SE", title: "Sales Executive", isHmTier: false, badgeHint: "Rank Holder" },
-  { code: "SO", title: "Sales Officer", isHmTier: false, badgeHint: "Rank Holder" },
-  { code: "TSM", title: "Territory Sales Manager", isHmTier: false, badgeHint: "Rank Holder" },
-  { code: "ASM", title: "Area Sales Manager", isHmTier: false, badgeHint: "Rank Holder" },
-  { code: "RSM", title: "Regional Sales Manager", isHmTier: false, badgeHint: "Rank Holder" }
+  { code: "HM_PR", title: "Health Mitra PR", isHmTier: true, badgeHint: "HM-PR + Patient + MRP" },
+  { code: "HM1", title: "Health Mitra Tier 1", isHmTier: true, badgeHint: "HM-PR + HM1 + Patient + MRP" },
+  { code: "HM2", title: "Health Mitra Tier 2", isHmTier: true, badgeHint: "HM2 + HM3 + Patient + MRP" },
+  { code: "HM3", title: "Health Mitra Tier 3", isHmTier: true, badgeHint: "HM3 + Patient + MRP" },
+  { code: "MR", title: "Medical Representative", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "SR", title: "Senior Representative", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "SE", title: "Sales Executive", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "SO", title: "Sales Officer", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "TSM", title: "Territory Sales Manager", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "ASM", title: "Area Sales Manager", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" },
+  { code: "RSM", title: "Regional Sales Manager", isHmTier: false, badgeHint: "Extra Rank • All HM Prices" }
 ];
 
 const PROMOTION_LADDER = ["HM1", "HM2", "HM3", "MR", "SR", "SE", "SO", "TSM", "ASM", "RSM"];
 
 function normalizeRankCode(rawCode) {
   const clean = String(rawCode || "").trim().toUpperCase();
+  if (["HM.PR.", "HM.PR", "HM-PR", "HM_PR", "HMPR", "HM PR", "PR"].includes(clean)) return "HM_PR";
   if (!clean || clean === "HM" || clean === "HM-1" || clean === "HM_1") return "HM1";
   if (clean === "HM-2" || clean === "HM_2") return "HM2";
   if (clean === "HM-3" || clean === "HM_3") return "HM3";
@@ -74,7 +76,12 @@ function getRankTitle(rawCode) {
 
 function isHmSelfTier(rawCode) {
   const norm = normalizeRankCode(rawCode);
-  return norm === "HM1" || norm === "HM2" || norm === "HM3" || norm === "HM";
+  return ["HM_PR", "HM1", "HM2", "HM3", "HM"].includes(norm);
+}
+
+const EXTRA_RANK_CODES = new Set(["MR", "SR", "SE", "SO", "TSM", "ASM", "RSM"]);
+function hasExtraRank(hm) {
+  return EXTRA_RANK_CODES.has(normalizeRankCode(hm?.extraRank));
 }
 
 function deriveCodeName(name) {
@@ -228,17 +235,19 @@ function getLoggedInHmObject() {
 }
 
 function getVisibleHmTierMode() {
-  if (!state.currentUser) return "ALL_THREE";
-  if (state.currentUser.type === "OFFICE") return "ALL_THREE";
+  if (!state.currentUser || state.currentUser.type === "OFFICE") return "ALL_FOUR";
   const hm = getLoggedInHmObject();
+  if (hasExtraRank(hm)) return "ALL_FOUR";
   const rank = normalizeRankCode(hm?.rankCode || state.currentUser.rankCode || "HM1");
-  if (rank === "HM2") return "ONLY_HM2";
-  if (rank === "HM3") return "ONLY_HM3";
-  return "ALL_THREE"; // HM1 and MR..RSM see all 3 HM prices
+  if (rank === "HM_PR") return "HM_PR_ONLY";
+  if (rank === "HM2") return "HM2_HM3";
+  if (rank === "HM3") return "HM3_ONLY";
+  return "HM_PR_HM1";
 }
 
 function getPriceForHmRank(med, rankCode) {
   const norm = normalizeRankCode(rankCode);
+  if (norm === "HM_PR") return med.hmPrPrice;
   if (norm === "HM2") return med.hm2Price;
   if (norm === "HM3") return med.hm3Price;
   return med.hm1Price;
@@ -246,6 +255,9 @@ function getPriceForHmRank(med, rankCode) {
 
 function getSelectedBillPrice(med, rankCode) {
   if (state.billMode === "PATIENT") return Number(med.patientPrice || 0);
+  const isOwnHmBill = state.currentUser?.type === "HM" &&
+    String(state.billSelectedHmCode || "").toUpperCase() === String(state.currentUser.hmCode || "").toUpperCase();
+  if (isOwnHmBill && hasExtraRank(getLoggedInHmObject())) return Number(med.hm1Price || 0);
   if (state.billMode === "HM_PR") return Number(med.hmPrPrice || 0);
   if (state.billMode === "HM1") return Number(med.hm1Price || 0);
   if (state.billMode === "HM2") return Number(med.hm2Price || 0);
@@ -274,6 +286,7 @@ function initFirestoreListeners() {
         photoUri: data.photoUri || "",
         sponsorHmId: data.sponsorHmId || "",
         rankCode: normalizeRankCode(data.rankCode || "HM1"),
+        extraRank: normalizeRankCode(data.extraRank || ""),
         password: data.password || "123456",
         creditBalance: Number(data.creditBalance || 0),
         totalSelfSales: Number(data.totalSelfSales || 0),
