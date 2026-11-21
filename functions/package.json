@@ -7,7 +7,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "lint": "node --check index.js"
+    "lint": "node --check index.js",
+    "provision-account": "node scripts/provision-login-account.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
