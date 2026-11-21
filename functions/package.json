@@ -1,0 +1,17 @@
+{
+  "name": "ub-ayurved-functions",
+  "description": "Server-side authentication and trusted business operations for UB Ayurved",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "scripts": {
+    "lint": "node --check index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0"
+  }
+}
