@@ -1,11 +1,11 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { initializeApp } = require("firebase-admin/app");
+const { initializeApp, getApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 const bcrypt = require("bcryptjs");
 
 initializeApp();
-const db = getFirestore();
+const db = getFirestore(getApp(), "ai-studio-android-stockpul-5036268a-3e2b-45b8-b9d9-792b6c85c0b2");
 
 const ALLOWED_ROLES = new Set([
   "HQ_SUPER_ADMIN",
@@ -30,9 +30,17 @@ function safeRoleClaims(account) {
     throw new HttpsError("permission-denied", GENERIC_LOGIN_ERROR);
   }
 
+  const accountType = String(account.accountType || "OFFICE").toUpperCase();
+  if ((role === "HEALTH_MITRA") !== (accountType === "HM")) {
+    throw new HttpsError("permission-denied", GENERIC_LOGIN_ERROR);
+  }
+  if (accountType !== "HM" && accountType !== "OFFICE") {
+    throw new HttpsError("permission-denied", GENERIC_LOGIN_ERROR);
+  }
+
   const claims = {
     role,
-    accountType: account.accountType === "HM" ? "HM" : "OFFICE",
+    accountType,
     canManageRawMaterial: [
       "HQ_SUPER_ADMIN", "HQ_ADMIN",
       "MEDICINE_INCHARGE_GOPAL", "MEDICINE_INCHARGE_MILAN", "MEDICINE_INCHARGE_JEET"
@@ -44,8 +52,7 @@ function safeRoleClaims(account) {
     canBilling: ["HQ_SUPER_ADMIN", "HQ_ADMIN", "BILLING_SONALI", "BILLING_KOUSHIK"].includes(role)
   };
 
-  if (account.accountType === "HM") {
-    claims.accountType = "HM";
+  if (accountType === "HM") {
     claims.hmCode = String(account.hmCode || account.uid || "").toUpperCase();
     claims.primaryRank = String(account.primaryRank || "HM1").toUpperCase();
     claims.extraRank = String(account.extraRank || "").toUpperCase();
