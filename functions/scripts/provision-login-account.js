@@ -8,7 +8,7 @@
 const readline = require("node:readline");
 const crypto = require("node:crypto");
 const bcrypt = require("bcryptjs");
-const { initializeApp, applicationDefault } = require("firebase-admin/app");
+const { initializeApp, getApp, applicationDefault } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
@@ -60,7 +60,7 @@ function normalizeLoginId(value) {
 async function main() {
   initializeApp({ credential: applicationDefault() });
   const auth = getAuth();
-  const db = getFirestore(undefined, DATABASE_ID);
+  const db = getFirestore(getApp(), DATABASE_ID);
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
   try {
