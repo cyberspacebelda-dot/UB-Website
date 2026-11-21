@@ -261,7 +261,11 @@ function getSelectedBillPrice(med, rankCode) {
   if (state.billMode === "PATIENT") return Number(med.patientPrice || 0);
   const isOwnHmBill = state.currentUser?.type === "HM" &&
     String(state.billSelectedHmCode || "").toUpperCase() === String(state.currentUser.hmCode || "").toUpperCase();
-  if (isOwnHmBill && hasExtraRank(getLoggedInHmObject())) return Number(med.hm1Price || 0);
+  if (isOwnHmBill) {
+    const ownHm = getLoggedInHmObject();
+    const ownBillingRank = hasExtraRank(ownHm) ? "HM1" : normalizeRankCode(ownHm?.rankCode || rankCode);
+    return Number(getPriceForHmRank(med, ownBillingRank) || 0);
+  }
   if (state.billMode === "HM_PR") return Number(med.hmPrPrice || 0);
   if (state.billMode === "HM1") return Number(med.hm1Price || 0);
   if (state.billMode === "HM2") return Number(med.hm2Price || 0);
@@ -985,7 +989,7 @@ function renderNewBillTab(container) {
                   <div class="text-xs font-extrabold text-slate-900">#${m.slNo} ${escapeHtml(m.name)} <span class="text-slate-500 font-semibold">(${escapeHtml(m.quantityNetContent)})</span></div>
                   <div class="text-[11px] text-slate-600 font-semibold">
                     MRP: ₹${m.mrpPrice.toFixed(0)} •
-                    ${state.billMode === "PATIENT" ? `Patient Rate: ₹${m.patientPrice}` : state.billMode === "HM_PR" ? `HM.PR. Rate: ₹${m.hmPrPrice}` : `${state.billMode.replace("HM","HM ")} Rate: ₹${unitRate}`}
+                    ${state.billMode === "PATIENT" ? `Patient Rate: ₹${m.patientPrice}` : isHm ? `Your HM Rate: ₹${unitRate}` : state.billMode === "HM_PR" ? `HM.PR. Rate: ₹${m.hmPrPrice}` : `${state.billMode.replace("HM","HM ")} Rate: ₹${unitRate}`}
                   </div>
                 </div>
                 <button onclick="window.ubApp.addMedToBill('${escapeAttr(m.id)}')"
